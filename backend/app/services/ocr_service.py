@@ -1,29 +1,51 @@
 # services/ocr_service.py
 
-import pytesseract
-from PIL import Image
+import requests
 import concurrent.futures
 from fastapi import HTTPException
+from pathlib import Path
 
 
 class OCRService:
-
-    def __init__(self, tesseract_path: str = None):
+    def __init__(self, api_key: str):
         """
-        If a Tesseract path is provided (local dev), use it.
-        Otherwise, fallback to the system-installed tesseract (deployment).
+        OCR Service using OCR.Space API (cloud-based).
+        This works for deployment without installing Tesseract.
         """
-        if tesseract_path:
-            pytesseract.pytesseract.tesseract_cmd = tesseract_path
-        else:
-            # On Render or Linux deployment, tesseract should be in PATH
-            pytesseract.pytesseract.tesseract_cmd = "tesseract"
+        if not api_key:
+            raise ValueError("OCR API key is required")
+        self.api_key = api_key
+        self.ocr_url = "https://api.ocr.space/parse/image"
 
     def _extract_text(self, file_path: str) -> str:
         try:
-            image = Image.open(file_path)
-            text = pytesseract.image_to_string(image)
-            return text.strip()
+            if not Path(file_path).exists():
+                raise HTTPException(status_code=400, detail="File not found")
+
+            with open(file_path, "rb") as f:
+                files = {"file": f}
+                payload = {
+                    "apikey": self.api_key,
+                    "OCREngine": 2,  # Use OCR Engine 2 for better accuracy
+                    "language": "eng",
+                }
+
+                response = requests.post(self.ocr_url, files=files, data=payload)
+                result = response.json()
+
+                if result.get("IsErroredOnProcessing"):
+                    raise HTTPException(
+                        status_code=500,
+                        detail=f"OCR failed: {result.get('ErrorMessage', 'Unknown error')}"
+                    )
+
+                parsed_results = result.get("ParsedResults")
+                if not parsed_results:
+                    return ""
+
+                text = parsed_results[0].get("ParsedText", "")
+                return text.strip()
+
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
 
