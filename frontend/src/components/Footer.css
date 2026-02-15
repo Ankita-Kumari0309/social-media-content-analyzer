@@ -1,0 +1,19 @@
+@import "../pages/Home.css";
+
+
+/* ================= FOOTER ================= */
+.footer{
+  padding:50px 6%;
+  background:var(--bg2);
+  color:var(--text);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  border-top:1px solid var(--border);
+}
+
+.footer-text p{
+  margin:4px 0;
+  color:var(--muted);
+}
