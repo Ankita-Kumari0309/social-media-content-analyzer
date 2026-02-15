@@ -12,16 +12,13 @@ from app.services.AIservice import AIService
 
 from app.utils.config import settings
 
-
 router = APIRouter(prefix="/analyze", tags=["Analyze"])
-
 
 @router.post("/")
 async def analyze_document(
     file: UploadFile = File(...),
     mode: str = Form(...)
 ):
-
     if mode not in ["rule", "ai"]:
         raise HTTPException(status_code=400, detail="Mode must be 'rule' or 'ai'")
 
@@ -36,15 +33,15 @@ async def analyze_document(
         temp_path = temp.name
 
     try:
-        ocr_service = OCRService(settings.TESSERACT_PATH)
+        # Initialize services
+        ocr_service = OCRService(settings.OCR_API_KEY)  # Use cloud OCR API
         pdf_service = PDFService()
         rule_engine = RuleEngine()
         ai_service = AIService(settings.GEMINI_API_KEY)
 
         filename = file.filename.lower()
 
-        filename = file.filename.lower()
-
+        # Extract text based on file type
         if filename.endswith(".pdf"):
             text = pdf_service.extract_text_with_timeout(temp_path)
         elif filename.endswith(".docx"):
@@ -54,7 +51,7 @@ async def analyze_document(
         else:
             raise HTTPException(status_code=400, detail="Unsupported file type")
 
-
+        # Analyze text
         if mode == "rule":
             result = rule_engine.analyze(text)
         else:
