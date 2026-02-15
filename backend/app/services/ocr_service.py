@@ -8,8 +8,16 @@ from fastapi import HTTPException
 
 class OCRService:
 
-    def __init__(self, tesseract_path: str):
-        pytesseract.pytesseract.tesseract_cmd = tesseract_path
+    def __init__(self, tesseract_path: str = None):
+        """
+        If a Tesseract path is provided (local dev), use it.
+        Otherwise, fallback to the system-installed tesseract (deployment).
+        """
+        if tesseract_path:
+            pytesseract.pytesseract.tesseract_cmd = tesseract_path
+        else:
+            # On Render or Linux deployment, tesseract should be in PATH
+            pytesseract.pytesseract.tesseract_cmd = "tesseract"
 
     def _extract_text(self, file_path: str) -> str:
         try:
