@@ -1,0 +1,7359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot Gathering — LOOK · COMPUTE · MOVE</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*,*::before,*::after{
+  box-sizing:border-box;
+  margin:0;
+  padding:0
+}
+
+:root{
+  --bg:#F4F6FA;
+  --bg2:#FFFFFF;
+  --bg3:#EDF1F7;
+  --bg4:#E1E7F0;
+  --bg5:#D1D9E6;
+
+  --border:#D6DEEA;
+  --border2:#C1CCE0;
+  --border3:#9FAFCB;
+
+  --leader:#0E7C7B;
+  --leader-mid:#14A3A1;
+  --leader-light:#E3F6F5;
+  --leader-glow:rgba(14,124,123,0.25);
+
+  --follower:#6D28D9;
+  --follower-light:#F1EAFE;
+
+  --target:#D6455D;
+  --target-light:#FDECEF;
+
+  --coral:#E2653A;
+  --coral-light:#FCEEE6;
+
+  --teal:#0E7C7B;
+
+  --amber:#C98A12;
+  --amber-light:#FBF1DE;
+
+  --green:#3F7D20;
+  --green-light:#EDF6E3;
+
+  --text:#1A1D2E;
+  --text2:#3A4070;
+  --text3:#7880AA;
+  --text4:#B0B8D8;
+
+  --shadow-sm:0 1px 4px rgba(14,124,123,0.08);
+  --shadow-md:0 4px 16px rgba(14,124,123,0.12);
+  --shadow-lg:0 12px 40px rgba(14,124,123,0.16);
+
+  --cell:72px;
+
+  --radius:8px;
+  --radius-lg:12px;
+  --radius-xl:20px;
+
+  --font-mono:'JetBrains Mono',monospace;
+  --font-ui:'Inter',sans-serif;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  background:var(--bg);
+  color:var(--text);
+  font-family:var(--font-ui);
+  font-size:14px;
+  overflow:hidden
+}
+
+/* =========================================================
+   APP SHELL
+   ========================================================= */
+
+.app{
+  display:grid;
+  grid-template-columns:1fr 316px;
+  grid-template-rows:54px 1fr auto;
+  height:100vh;
+  min-height:0;
+}
+
+/* =========================================================
+   TOPBAR
+   ========================================================= */
+
+.topbar{
+  grid-column:1/-1;
+  grid-row:1;
+
+  background:var(--bg2);
+  border-bottom:1.5px solid var(--border);
+
+  display:flex;
+  align-items:center;
+
+  padding:0 18px;
+  gap:14px;
+
+  z-index:40;
+  flex-shrink:0;
+
+  box-shadow:var(--shadow-sm);
+}
+
+.topbar-brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-shrink:0
+}
+
+.brand-icon{
+  width:34px;
+  height:34px;
+  background:var(--leader);
+  border-radius:9px;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  flex-shrink:0;
+
+  box-shadow:0 2px 8px rgba(14,124,123,0.35)
+}
+
+.brand-title{
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:0.01em;
+  line-height:1.2;
+  color:var(--text)
+}
+
+.brand-title span{
+  color:var(--leader)
+}
+
+.brand-sub{
+  font-size:9px;
+  color:var(--text3);
+  letter-spacing:0.1em;
+  font-family:var(--font-mono)
+}
+
+.topbar-sep{
+  width:1px;
+  height:22px;
+  background:var(--border);
+  flex-shrink:0
+}
+
+.topbar-keys{
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+
+  font-size:11px;
+  color:var(--text3)
+}
+
+.topbar-keys kbd{
+  background:var(--bg3);
+  border:1px solid var(--border2);
+  border-radius:4px;
+
+  padding:1px 7px;
+
+  color:var(--text2);
+  font-family:var(--font-mono);
+  font-size:10px;
+
+  box-shadow:0 1px 0 var(--border2)
+}
+
+.topbar-keys span{
+  color:var(--text4);
+  margin-right:2px
+}
+
+.topbar-right{
+  margin-left:auto;
+  display:flex;
+  align-items:center;
+  gap:8px
+}
+
+.case-tag{
+  font-size:10px;
+  font-weight:700;
+
+  padding:3px 11px;
+
+  border-radius:20px;
+
+  background:var(--leader-light);
+  color:var(--leader);
+
+  border:1px solid rgba(14,124,123,0.3);
+
+  white-space:nowrap;
+
+  font-family:var(--font-mono)
+}
+
+.icon-btn{
+  width:32px;
+  height:32px;
+
+  border-radius:7px;
+  border:1px solid var(--border2);
+
+  background:transparent;
+  color:var(--text3);
+
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:14px;
+
+  transition:all 0.15s
+}
+
+.icon-btn:hover{
+  background:var(--bg3);
+  color:var(--text);
+  border-color:var(--border3)
+}
+
+/* =========================================================
+   CONFIG DRAWER
+   ========================================================= */
+
+.config-overlay{
+  display:none;
+
+  position:fixed;
+  inset:0;
+
+  background:rgba(26,29,46,0.25);
+
+  z-index:60;
+
+  backdrop-filter:blur(3px)
+}
+
+.config-overlay.show{
+  display:block
+}
+
+.config-drawer{
+  position:fixed;
+
+  top:0;
+  right:-340px;
+
+  width:322px;
+  height:100vh;
+
+  background:var(--bg2);
+
+  border-left:1.5px solid var(--border2);
+
+  z-index:70;
+
+  transition:right 0.3s cubic-bezier(.4,0,.2,1);
+
+  display:flex;
+  flex-direction:column;
+
+  box-shadow:-6px 0 24px rgba(14,124,123,0.1)
+}
+
+.config-drawer.open{
+  right:0
+}
+
+.cfg-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:16px 18px;
+
+  border-bottom:1px solid var(--border)
+}
+
+.cfg-title{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text)
+}
+
+.cfg-body{
+  flex:1;
+  overflow-y:auto;
+
+  padding:16px 18px;
+
+  display:flex;
+  flex-direction:column;
+
+  gap:14px
+}
+
+.cfg-field{
+  display:flex;
+  flex-direction:column;
+  gap:5px
+}
+
+.cfg-field label{
+  font-size:11px;
+  color:var(--text2);
+  font-weight:500;
+
+  display:flex;
+  align-items:center;
+
+  gap:6px
+}
+
+.cfg-hint{
+  font-size:9px;
+  color:var(--text3);
+  font-family:var(--font-mono)
+}
+
+.cfg-input,
+.cfg-textarea{
+  background:var(--bg3);
+
+  border:1.5px solid var(--border2);
+
+  color:var(--text);
+
+  border-radius:7px;
+
+  padding:8px 11px;
+
+  font-family:var(--font-mono);
+  font-size:12px;
+
+  width:100%;
+
+  transition:border-color 0.2s,box-shadow 0.2s
+}
+
+.cfg-input:focus,
+.cfg-textarea:focus{
+  outline:none;
+
+  border-color:var(--leader);
+
+  box-shadow:0 0 0 3px var(--leader-glow)
+}
+
+.cfg-textarea{
+  resize:vertical;
+  min-height:100px
+}
+
+.cfg-note{
+  font-size:10px;
+  color:var(--teal);
+
+  margin-top:2px;
+
+  font-style:italic
+}
+
+.cfg-actions{
+  display:flex;
+  flex-direction:column;
+  gap:7px
+}
+
+.cfg-full{
+  width:100%
+}
+
+.cfg-quick-sizes{
+  display:flex;
+  gap:6px;
+  margin-top:2px
+}
+
+.cfg-quick-sizes button{
+  flex:1;
+  padding:6px 0;
+  font-size:11px
+}
+
+.cfg-quick-sizes button.active-size{
+  background:var(--leader);
+  border-color:var(--leader);
+  color:#fff
+}
+
+/* NEW CONFIG CHOICES */
+
+.cfg-choice-row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px
+}
+
+.cfg-choice{
+  display:flex;
+  align-items:center;
+  gap:7px;
+
+  padding:8px 10px;
+
+  background:var(--bg3);
+
+  border:1.5px solid var(--border2);
+
+  border-radius:7px;
+
+  cursor:pointer;
+
+  font-size:11px;
+  color:var(--text2);
+
+  transition:all 0.15s
+}
+
+.cfg-choice:hover{
+  border-color:var(--border3);
+  background:var(--bg2)
+}
+
+.cfg-choice input{
+  margin:0;
+  accent-color:var(--leader)
+}
+
+.cfg-choice.selected{
+  border-color:var(--leader);
+  background:var(--leader-light);
+  color:var(--leader);
+  font-weight:600
+}
+
+.cfg-inline-note{
+  font-size:9px;
+  color:var(--text3);
+  font-family:var(--font-mono);
+  line-height:1.4
+}
+
+.cfg-trials{
+  background:var(--amber-light);
+  border-color:#E8C875
+}
+
+.cfg-trials:focus{
+  border-color:var(--amber)
+}
+
+/* =========================================================
+   GRID PANEL
+   ========================================================= */
+
+.grid-panel{
+  grid-column:1;
+  grid-row:2;
+
+  display:flex;
+  flex-direction:column;
+
+  background:var(--bg);
+
+  min-height:0;
+
+  position:relative;
+  overflow:hidden
+}
+
+/* =========================================================
+   SIDEBAR
+   ========================================================= */
+
+.sidebar{
+  grid-column:2;
+  grid-row:2;
+
+  background:var(--bg2);
+
+  border-left:1.5px solid var(--border);
+
+  overflow-y:auto;
+
+  display:flex;
+  flex-direction:column;
+
+  min-height:0
+}
+
+/* =========================================================
+   REPLAY BAR
+   ========================================================= */
+
+.replay-bar{
+  grid-column:1/-1;
+  grid-row:3;
+
+  background:var(--bg2);
+
+  border-top:1.5px solid var(--border2);
+
+  display:none;
+
+  align-items:center;
+  gap:10px;
+
+  padding:7px 18px;
+
+  flex-shrink:0;
+
+  box-shadow:0 -2px 8px rgba(14,124,123,0.06)
+}
+
+.replay-bar.show{
+  display:flex
+}
+
+/* =========================================================
+   GRID HEADER
+   ========================================================= */
+
+.grid-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+
+  padding:11px 18px;
+
+  border-bottom:1.5px solid var(--border);
+
+  flex-shrink:0;
+
+  gap:12px;
+
+  background:var(--bg2)
+}
+
+.grid-header-right{
+  display:flex;
+  gap:16px
+}
+
+.mini-stat{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:1px
+}
+
+.mini-stat span{
+  font-size:17px;
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  color:var(--text);
+
+  line-height:1
+}
+
+.mini-stat label{
+  font-size:9px;
+  color:var(--text3);
+
+  text-transform:uppercase;
+
+  letter-spacing:0.07em
+}
+
+.grid-scroll{
+  flex:1;
+  overflow:auto;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  padding:20px;
+}
+
+.grid-outer{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  align-items:flex-start;
+  width:max-content;
+  min-width:max-content;
+}
+
+.col-labels{
+  display:flex;
+  padding-left:28px;
+  width: max-content;
+}
+
+.col-label{
+  width:var(--cell);
+
+  text-align:center;
+
+  font-size:10px;
+
+  color:var(--text3);
+
+  font-family:var(--font-mono);
+
+  padding-bottom:4px
+}
+
+.grid-body{
+  display:flex;
+  gap:6px;
+  width:max-content;
+  min-width:max-content;
+
+}
+
+.row-labels{
+  display:flex;
+  flex-direction:column;
+  width:28px
+}
+
+.row-label{
+  height:var(--cell);
+
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+
+  font-size:10px;
+
+  color:var(--text3);
+
+  font-family:var(--font-mono);
+
+  padding-right:6px;
+
+  margin:1.5px 0
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(var(--cols,4),var(--cell));
+  gap:3px;
+  background:var(--bg3);
+  border:1.5px solid var(--border2);
+  border-radius:var(--radius-lg);
+  padding:3px;
+  box-shadow:var(--shadow-md);
+  width:max-content;
+  min-width:max-content;
+}
+
+/* =========================================================
+   CELLS
+   ========================================================= */
+
+.cell{
+  width:var(--cell);
+  height:var(--cell);
+
+  background:var(--bg2);
+
+  border:1.5px solid var(--border);
+
+  border-radius:7px;
+
+  position:relative;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  overflow:hidden;
+
+  transition:
+    background 0.3s,
+    border-color 0.25s,
+    box-shadow 0.25s;
+
+  cursor:default
+}
+
+.cell.c-visited{
+  background:#EAF0F7;
+  border-color:var(--border2)
+}
+
+.cell.c-target{
+  background:var(--target-light);
+
+  border:2px solid var(--target);
+
+  box-shadow:
+    0 0 10px rgba(214,69,93,0.2)
+}
+
+.cell.c-leader{
+  background:var(--leader-light);
+
+  border:2px solid var(--leader-mid);
+
+  box-shadow:
+    0 0 12px var(--leader-glow)
+}
+
+.cell.c-stuck{
+  background:var(--coral-light);
+
+  border:2px solid var(--coral);
+
+  box-shadow:
+    0 0 10px rgba(226,101,58,0.2)
+}
+
+.cell.c-highlight{
+  background:var(--leader-light);
+  border:2px solid var(--leader-mid)
+}
+
+@keyframes ff{
+  0%{
+    background:var(--leader-light)
+  }
+
+  100%{
+    background:var(--bg2)
+  }
+}
+
+@keyframes fb{
+  0%{
+    background:var(--coral-light)
+  }
+
+  100%{
+    background:var(--bg2)
+  }
+}
+
+@keyframes fa{
+  0%{
+    background:var(--follower-light)
+  }
+
+  100%{
+    background:var(--bg2)
+  }
+}
+
+.flash-fwd{
+  animation:ff 0.7s ease-out
+}
+
+.flash-back{
+  animation:fb 0.7s ease-out
+}
+
+.flash-attach{
+  animation:fa 0.7s ease-out
+}
+
+.wb-num{
+  position:absolute;
+
+  top:3px;
+  left:5px;
+
+  font-size:11px;
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  color:var(--text4);
+
+  line-height:1;
+
+  pointer-events:none;
+
+  display:flex;
+  align-items:baseline;
+
+  gap:3px
+}
+
+.wb-num .wb-parent-tag{
+  font-size:8px;
+  font-weight:600;
+
+  color:var(--follower);
+
+  opacity:0.85
+}
+
+.cell.c-visited .wb-num{
+  color:var(--leader-mid)
+}
+
+.cell.c-target .wb-num{
+  color:var(--target)
+}
+
+.cell.c-leader .wb-num{
+  color:var(--leader)
+}
+
+/* =========================================================
+   ELECTION PANEL
+   ========================================================= */
+
+.election-panel{
+  border-radius:9px;
+
+  padding:10px 11px;
+
+  border:1.5px solid var(--border2);
+
+  background:var(--bg3);
+
+  transition:
+    background 0.3s,
+    border-color 0.3s
+}
+
+.election-panel.active{
+  background:var(--leader-light);
+
+  border-color:var(--leader-mid);
+
+  box-shadow:
+    0 0 0 3px var(--leader-glow)
+}
+
+.election-panel-title{
+  display:flex;
+  align-items:center;
+
+  gap:6px;
+
+  font-size:10px;
+  font-weight:700;
+
+  color:var(--text2);
+
+  margin-bottom:7px
+}
+
+.election-panel-title .dot{
+  width:6px;
+  height:6px;
+
+  border-radius:50%;
+
+  background:var(--text4)
+}
+
+.election-panel.active
+.election-panel-title
+.dot{
+  background:var(--leader);
+
+  animation:
+    election-pulse 1.1s ease-in-out infinite
+}
+
+.election-panel.active
+.election-panel-title{
+  color:var(--leader)
+}
+
+.election-candidates{
+  display:flex;
+  flex-wrap:wrap;
+
+  gap:6px
+}
+
+.election-chip{
+  display:flex;
+  align-items:center;
+
+  gap:5px;
+
+  padding:3px 9px;
+
+  border-radius:20px;
+
+  font-family:var(--font-mono);
+
+  font-size:10px;
+
+  font-weight:700;
+
+  background:var(--bg2);
+
+  border:1.5px solid var(--border2);
+
+  color:var(--text2)
+}
+
+.election-panel.active
+.election-chip{
+  border-color:var(--leader-mid);
+
+  color:var(--leader);
+
+  background:var(--leader-light)
+}
+
+.election-chip .chip-id{
+  width:16px;
+  height:16px;
+
+  border-radius:50%;
+
+  background:var(--leader);
+
+  color:#fff;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:8px
+}
+
+.election-empty{
+  font-size:10px;
+  color:var(--text3);
+  font-style:italic
+}
+
+.election-winner-line{
+  margin-top:8px;
+
+  padding-top:8px;
+
+  border-top:1px dashed var(--border2);
+
+  font-size:10px;
+
+  color:var(--follower);
+
+  font-weight:600;
+
+  display:none
+}
+
+.election-panel.decided
+.election-winner-line{
+  display:block
+}
+
+.visit-badge{
+  position:absolute;
+
+  bottom:3px;
+  left:5px;
+
+  font-size:8px;
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  color:var(--text4);
+
+  line-height:1;
+
+  pointer-events:none;
+
+  letter-spacing:0.02em
+}
+
+.visit-badge.multi-visit{
+  color:var(--amber)
+}
+
+.cell-coord{
+  position:absolute;
+
+  bottom:2px;
+  right:4px;
+
+  font-size:8px;
+
+  color:var(--text4);
+
+  font-family:var(--font-mono);
+
+  opacity:0.7;
+
+  pointer-events:none
+}
+
+.cell-content{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:1px;
+
+  z-index:2;
+
+  pointer-events:none
+}
+
+/* =========================================================
+   ELECTION TOOLTIP BADGE
+   ========================================================= */
+
+.election-badge{
+  position:absolute;
+
+  top:3px;
+  right:4px;
+
+  z-index:6;
+
+  font-size:9px;
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  color:var(--leader);
+
+  background:var(--leader-light);
+
+  border:1px solid var(--leader-mid);
+
+  border-radius:9px;
+
+  padding:1px 6px;
+
+  pointer-events:auto;
+
+  cursor:help;
+
+  animation:
+    election-pulse 1.1s ease-in-out infinite;
+
+  white-space:nowrap
+}
+
+@keyframes election-pulse{
+  0%,100%{
+    box-shadow:0 0 0 0 var(--leader-glow)
+  }
+
+  50%{
+    box-shadow:0 0 0 4px var(--leader-glow)
+  }
+}
+
+/* =========================================================
+   ROBOTS
+   ========================================================= */
+
+.robot-wrap{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  gap:1px
+}
+
+.robot-icon{
+  width:38px;
+  height:38px;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center
+}
+
+.robot-icon svg{
+  width:100%;
+  height:100%
+}
+
+.robot-sub{
+  font-size:8px;
+
+  font-family:var(--font-mono);
+
+  color:var(--text3);
+
+  letter-spacing:0.04em;
+
+  white-space:nowrap
+}
+
+@keyframes pop-in{
+  from{
+    transform:scale(0.3);
+    opacity:0
+  }
+
+  to{
+    transform:scale(1);
+    opacity:1
+  }
+}
+
+@keyframes pulse-leader{
+  0%,100%{
+    filter:drop-shadow(0 0 4px rgba(14,124,123,0.5))
+  }
+
+  50%{
+    filter:drop-shadow(0 0 10px rgba(14,124,123,0.8))
+  }
+}
+
+@keyframes pulse-target{
+  0%,100%{
+    filter:drop-shadow(0 0 4px rgba(214,69,93,0.4))
+  }
+
+  50%{
+    filter:drop-shadow(0 0 10px rgba(214,69,93,0.7))
+  }
+}
+
+.anim-pop{
+  animation:
+    pop-in 0.35s cubic-bezier(.34,1.56,.64,1)
+}
+
+.anim-leader{
+  animation:
+    pulse-leader 2s ease-in-out infinite
+}
+
+.anim-target{
+  animation:
+    pulse-target 2.5s ease-in-out infinite
+}
+
+/* =========================================================
+   LEADER FLASH
+   ========================================================= */
+
+.leader-flash-overlay{
+  display:none;
+
+  position:absolute;
+  inset:0;
+
+  z-index:50;
+
+  background:rgba(244,246,250,0.88);
+
+  align-items:center;
+  justify-content:center;
+
+  pointer-events:none
+}
+
+.leader-flash-overlay.show{
+  display:flex;
+
+  animation:
+    flash-fade 1.8s ease-out forwards
+}
+
+@keyframes flash-fade{
+  0%{
+    opacity:0
+  }
+
+  15%{
+    opacity:1
+  }
+
+  70%{
+    opacity:1
+  }
+
+  100%{
+    opacity:0
+  }
+}
+
+.torch-container{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  gap:12px
+}
+
+.torch-flame{
+  width:48px;
+  height:64px;
+
+  position:relative
+}
+
+.torch-flame::before{
+  content:'';
+
+  position:absolute;
+
+  bottom:0;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:32px;
+  height:48px;
+
+  background:
+    radial-gradient(
+      ellipse at bottom,
+      #fbbf24,
+      #f59e0b,
+      #d97706
+    );
+
+  border-radius:50% 50% 40% 40%;
+
+  animation:
+    flicker 0.4s ease-in-out infinite alternate
+}
+
+.torch-flame::after{
+  content:'';
+
+  position:absolute;
+
+  bottom:8px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  width:18px;
+  height:32px;
+
+  background:
+    radial-gradient(
+      ellipse at bottom,
+      #fff7ed,
+      #fde68a
+    );
+
+  border-radius:50% 50% 40% 40%;
+
+  animation:
+    flicker 0.3s ease-in-out infinite alternate-reverse
+}
+
+@keyframes flicker{
+  0%{
+    transform:
+      translateX(-50%)
+      scaleX(1)
+      scaleY(1)
+  }
+
+  100%{
+    transform:
+      translateX(-50%)
+      scaleX(0.92)
+      scaleY(1.06)
+  }
+}
+
+.torch-text{
+  font-size:18px;
+
+  font-weight:700;
+
+  color:#92400E;
+
+  font-family:var(--font-mono);
+
+  letter-spacing:0.06em;
+
+  text-align:center
+}
+
+/* =========================================================
+   EVENT BANNER
+   ========================================================= */
+
+.event-banner{
+  display:flex;
+
+  align-items:flex-start;
+
+  gap:10px;
+
+  padding:10px 18px;
+
+  background:var(--bg2);
+
+  border-top:1.5px solid var(--border);
+
+  flex-shrink:0;
+
+  min-height:44px;
+
+  box-shadow:
+    0 -1px 0 var(--border)
+}
+
+.event-icon{
+  width:22px;
+  height:22px;
+
+  border-radius:50%;
+
+  background:var(--leader-light);
+
+  border:1.5px solid rgba(14,124,123,0.3);
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:11px;
+  font-weight:700;
+
+  color:var(--leader);
+
+  flex-shrink:0;
+
+  font-family:var(--font-mono)
+}
+
+.event-text{
+  font-size:11px;
+
+  color:var(--text2);
+
+  line-height:1.5;
+
+  font-family:var(--font-mono);
+
+  flex:1;
+
+  word-break:break-word
+}
+
+/* =========================================================
+   PHASE BADGE
+   ========================================================= */
+
+.phase-badge{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:6px 14px;
+
+  border-radius:20px;
+
+  font-size:11px;
+
+  font-weight:600;
+
+  font-family:var(--font-mono);
+
+  border:1.5px solid transparent;
+
+  transition:all 0.3s
+}
+
+.phase-dot{
+  width:7px;
+  height:7px;
+
+  border-radius:50%;
+
+  flex-shrink:0;
+
+  animation:
+    blink 1.6s ease-in-out infinite
+}
+
+@keyframes blink{
+  0%,100%{
+    opacity:1
+  }
+
+  50%{
+    opacity:0.15
+  }
+}
+
+/* =========================================================
+   SIDEBAR BLOCKS
+   ========================================================= */
+
+.sb-block{
+  padding:13px 15px;
+
+  border-bottom:1px solid var(--border);
+
+  flex-shrink:0
+}
+
+.sb-label{
+  font-size:9px;
+
+  font-weight:700;
+
+  letter-spacing:0.12em;
+
+  text-transform:uppercase;
+
+  color:var(--text3);
+
+  margin-bottom:9px;
+
+  display:flex;
+
+  align-items:center;
+
+  gap:6px
+}
+
+.sb-label-hint{
+  font-size:9px;
+
+  font-weight:400;
+
+  color:var(--text4);
+
+  letter-spacing:0.04em;
+
+  text-transform:none
+}
+
+/* =========================================================
+   CONTROLS
+   ========================================================= */
+
+.ctrl-grid{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:7px;
+
+  margin-bottom:7px
+}
+
+.btn{
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  gap:5px;
+
+  padding:8px 10px;
+
+  border:1.5px solid var(--border2);
+
+  background:var(--bg2);
+
+  color:var(--text);
+
+  font-family:var(--font-ui);
+
+  font-size:12px;
+
+  font-weight:500;
+
+  border-radius:7px;
+
+  cursor:pointer;
+
+  transition:all 0.15s;
+
+  white-space:nowrap;
+
+  box-shadow:var(--shadow-sm)
+}
+
+.btn:hover{
+  background:var(--bg3);
+  border-color:var(--border3)
+}
+
+.btn:active{
+  transform:scale(0.96)
+}
+
+.btn:disabled{
+  opacity:0.35;
+
+  cursor:not-allowed;
+
+  box-shadow:none
+}
+
+.btn-primary{
+  background:var(--leader);
+
+  border-color:var(--leader);
+
+  color:#fff;
+
+  box-shadow:
+    0 2px 10px
+    rgba(14,124,123,0.3)
+}
+
+.btn-primary:hover{
+  background:#0A6362;
+  border-color:#0A6362
+}
+
+.btn-play{
+  background:var(--bg2)
+}
+
+.btn-play.active{
+  background:var(--follower-light);
+
+  border-color:var(--follower);
+
+  color:var(--follower)
+}
+
+.btn-danger{
+  background:#FDF0F1;
+
+  border-color:#F0AEB8;
+
+  color:var(--target)
+}
+
+.btn-danger:hover{
+  background:var(--target-light)
+}
+
+.btn-run{
+  background:var(--green-light);
+
+  border-color:var(--green);
+
+  color:var(--green);
+
+  width:100%;
+
+  margin-bottom:8px
+}
+
+.btn-run:hover{
+  background:#DCEDC4
+}
+
+.speed-row{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px
+}
+
+.speed-lbl{
+  font-size:10px;
+
+  color:var(--text3);
+
+  white-space:nowrap
+}
+
+.speed-val{
+  font-size:11px;
+
+  color:var(--leader);
+
+  min-width:32px;
+
+  text-align:right;
+
+  font-family:var(--font-mono);
+
+  font-weight:600
+}
+
+input[type=range]{
+  flex:1;
+
+  accent-color:var(--leader);
+
+  cursor:pointer;
+
+  height:4px
+}
+
+/* =========================================================
+   STATS CARDS
+   ========================================================= */
+
+.stats-4{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:7px;
+
+  margin-bottom:9px
+}
+
+.stat-card{
+  background:var(--bg3);
+
+  border:1px solid var(--border);
+
+  border-radius:8px;
+
+  padding:9px 11px;
+
+  border-top:3px solid
+}
+
+.stat-card.c-amber{
+  border-top-color:var(--amber);
+
+  background:var(--amber-light)
+}
+
+.stat-card.c-coral{
+  border-top-color:var(--coral);
+
+  background:var(--coral-light)
+}
+
+.stat-card.c-teal{
+  border-top-color:var(--follower);
+
+  background:var(--follower-light)
+}
+
+.stat-card.c-purple{
+  border-top-color:var(--leader-mid);
+
+  background:var(--leader-light)
+}
+
+.sc-val{
+  font-size:20px;
+
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  line-height:1
+}
+
+.sc-lbl{
+  font-size:9px;
+
+  text-transform:uppercase;
+
+  letter-spacing:0.07em;
+
+  margin-top:3px;
+
+  font-weight:600
+}
+
+.stat-card.c-amber .sc-val{
+  color:var(--amber)
+}
+
+.stat-card.c-amber .sc-lbl{
+  color:#7A5309
+}
+
+.stat-card.c-coral .sc-val{
+  color:var(--coral)
+}
+
+.stat-card.c-coral .sc-lbl{
+  color:#8A3A1A
+}
+
+.stat-card.c-teal .sc-val{
+  color:var(--follower)
+}
+
+.stat-card.c-teal .sc-lbl{
+  color:#4A1D9E
+}
+
+.stat-card.c-purple .sc-val{
+  color:var(--leader)
+}
+
+.stat-card.c-purple .sc-lbl{
+  color:#0A5453
+}
+
+.progress-rows{
+  display:flex;
+
+  flex-direction:column;
+
+  gap:7px
+}
+
+.prog-row{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  font-size:10px;
+
+  color:var(--text3)
+}
+
+.prog-row span:last-child{
+  min-width:34px;
+
+  text-align:right;
+
+  font-family:var(--font-mono);
+
+  color:var(--text2);
+
+  font-weight:500
+}
+
+.prog-track{
+  flex:1;
+
+  height:5px;
+
+  background:var(--bg4);
+
+  border-radius:3px;
+
+  overflow:hidden
+}
+
+.prog-fill{
+  height:100%;
+
+  border-radius:3px;
+
+  transition:width 0.4s
+}
+
+.prog-fill.teal{
+  background:var(--follower)
+}
+
+.prog-fill.purple{
+  background:var(--leader-mid)
+}
+
+/* =========================================================
+   ROBOT LIST
+   ========================================================= */
+
+.robot-row{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px;
+
+  padding:6px 0;
+
+  border-bottom:1px solid var(--border)
+}
+
+.robot-row:last-child{
+  border-bottom:none
+}
+
+.rr-icon{
+  width:27px;
+  height:27px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:9px;
+
+  font-weight:700;
+
+  flex-shrink:0
+}
+
+.rr-icon.ldr{
+  background:var(--leader);
+
+  color:#fff
+}
+
+.rr-icon.ind{
+  background:var(--amber);
+
+  color:#fff
+}
+
+.rr-icon.done{
+  background:var(--follower);
+
+  color:#fff
+}
+
+.rr-info{
+  flex:1;
+
+  min-width:0
+}
+
+.rr-name{
+  font-size:11px;
+
+  font-weight:600;
+
+  font-family:var(--font-mono);
+
+  color:var(--text)
+}
+
+.rr-pos{
+  font-size:10px;
+
+  color:var(--text3)
+}
+
+.rr-badge{
+  font-size:9px;
+
+  padding:1px 7px;
+
+  border-radius:4px;
+
+  font-family:var(--font-mono);
+
+  font-weight:700
+}
+
+.badge-leader{
+  background:var(--leader-light);
+
+  color:var(--leader);
+
+  border:1px solid rgba(14,124,123,0.3)
+}
+
+.badge-indep{
+  background:var(--amber-light);
+
+  color:var(--amber);
+
+  border:1px solid rgba(201,138,18,0.3)
+}
+
+.badge-done{
+  background:var(--follower-light);
+
+  color:var(--follower);
+
+  border:1px solid rgba(109,40,217,0.3)
+}
+
+/* =========================================================
+   MATRICES
+   ========================================================= */
+
+.wb-matrix-wrap{
+  overflow:auto;
+
+  margin-bottom:9px
+}
+
+.wb-matrix{
+  border-collapse:collapse;
+
+  font-family:var(--font-mono);
+
+  font-size:11px;
+
+  width:100%
+}
+
+.wb-matrix th,
+.wb-matrix td{
+  border:1px solid var(--border);
+
+  text-align:center;
+
+  padding:4px 3px;
+
+  min-width:27px;
+
+  transition:background 0.3s
+}
+
+.wb-matrix th{
+  background:var(--bg3);
+
+  color:var(--text3);
+
+  font-weight:600;
+
+  font-size:9px
+}
+
+.wb-matrix td{
+  background:var(--bg2);
+
+  color:var(--text2)
+}
+
+.wm-unvis{
+  color:var(--text4)
+}
+
+.wm-target{
+  background:var(--target-light);
+
+  color:var(--target);
+
+  font-weight:700
+}
+
+.wm-leader{
+  background:var(--leader-light);
+
+  color:var(--leader);
+
+  font-weight:700
+}
+
+.wm-low{
+  background:#E8F0FB;
+
+  color:#185FA5
+}
+
+.wm-mid{
+  background:var(--leader-light);
+
+  color:var(--leader)
+}
+
+.wm-high{
+  background:var(--follower-light);
+
+  color:var(--follower)
+}
+
+.wb-legend{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:4px
+}
+
+.wbl-item{
+  display:flex;
+
+  align-items:center;
+
+  gap:5px;
+
+  font-size:10px;
+
+  color:var(--text3)
+}
+
+.wbl-dot{
+  width:8px;
+  height:8px;
+
+  border-radius:50%;
+
+  flex-shrink:0
+}
+
+/* =========================================================
+   LEGEND
+   ========================================================= */
+
+.legend-grid{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:9px
+}
+
+.leg-item{
+  display:flex;
+
+  align-items:center;
+
+  gap:8px
+}
+
+.leg-robot{
+  width:28px;
+  height:28px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:10px;
+
+  font-weight:700;
+
+  color:#fff;
+
+  flex-shrink:0
+}
+
+.leg-robot.leader-r{
+  background:var(--leader)
+}
+
+.leg-robot.indep-r{
+  background:var(--amber)
+}
+
+.leg-robot.target-r{
+  background:var(--target)
+}
+
+.leg-cell{
+  width:28px;
+  height:28px;
+
+  border-radius:5px;
+
+  flex-shrink:0;
+
+  border:1px solid
+}
+
+.leg-cell.visited-c{
+  background:#EAF0F7;
+
+  border-color:var(--border2)
+}
+
+.leg-cell.stuck-c{
+  background:var(--coral-light);
+
+  border-color:var(--coral)
+}
+
+.leg-cell.unvisited-c{
+  background:var(--bg2);
+
+  border-color:var(--border)
+}
+
+.leg-name{
+  font-size:11px;
+
+  font-weight:500;
+
+  line-height:1.3;
+
+  color:var(--text)
+}
+
+.leg-desc{
+  font-size:9px;
+
+  color:var(--text3)
+}
+
+/* =========================================================
+   REPLAY
+   ========================================================= */
+
+.replay-label{
+  font-size:11px;
+
+  color:var(--text2);
+
+  white-space:nowrap;
+
+  font-family:var(--font-mono)
+}
+
+.replay-pos{
+  font-size:11px;
+
+  font-family:var(--font-mono);
+
+  color:var(--text2);
+
+  min-width:70px;
+
+  font-weight:500
+}
+
+/* =========================================================
+   DONE OVERLAY
+   ========================================================= */
+
+.done-overlay{
+  display:none;
+
+  position:fixed;
+
+  inset:0;
+
+  background:rgba(26,29,46,0.5);
+
+  z-index:80;
+
+  align-items:center;
+  justify-content:center;
+
+  backdrop-filter:blur(12px)
+}
+
+.done-overlay.show{
+  display:flex;
+
+  animation:fade-in 0.45s ease
+}
+
+@keyframes fade-in{
+  from{
+    opacity:0;
+
+    transform:scale(0.96)
+  }
+
+  to{
+    opacity:1;
+
+    transform:scale(1)
+  }
+}
+
+.done-card{
+  background:var(--bg2);
+
+  border:1.5px solid var(--border2);
+
+  border-radius:24px;
+
+  padding:0;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:stretch;
+
+  min-width:460px;
+
+  max-width:520px;
+
+  box-shadow:
+    0 24px 64px rgba(14,124,123,0.22),
+    0 4px 16px rgba(14,124,123,0.1);
+
+  overflow:hidden;
+
+  position:relative;
+
+  max-height:92vh;
+
+  overflow-y:auto
+}
+
+.done-card::before{
+  content:'';
+
+  position:absolute;
+
+  top:0;
+  left:0;
+  right:0;
+
+  height:4px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #0E7C7B,
+      #6D28D9,
+      #3F7D20,
+      #C98A12,
+      #D6455D
+    )
+}
+
+.done-header{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  padding:28px 40px 20px;
+
+  gap:8px;
+
+  background:
+    linear-gradient(
+      180deg,
+      #F7FAFB 0%,
+      #FFFFFF 100%
+    );
+
+  border-bottom:1px solid var(--border)
+}
+
+.done-icon-ring{
+  width:60px;
+  height:60px;
+
+  border-radius:50%;
+
+  background:var(--follower-light);
+
+  border:2.5px solid var(--follower);
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:24px;
+
+  color:var(--follower);
+
+  box-shadow:
+    0 4px 16px rgba(109,40,217,0.2)
+}
+
+.done-title{
+  font-size:20px;
+
+  font-weight:700;
+
+  color:var(--green);
+
+  letter-spacing:-0.01em
+}
+
+.done-meta{
+  font-size:11px;
+
+  color:var(--text3);
+
+  font-family:var(--font-mono);
+
+  background:var(--bg3);
+
+  padding:4px 14px;
+
+  border-radius:20px;
+
+  border:1px solid var(--border)
+}
+
+.done-total-block{
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+  justify-content:center;
+
+  padding:22px 24px 18px;
+
+  border-bottom:1px solid var(--border);
+
+  background:var(--leader-light);
+
+  position:relative
+}
+
+.done-total-block::before{
+  content:'TOTAL COMPUTATION CYCLES';
+
+  position:absolute;
+
+  top:10px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  font-size:9px;
+
+  font-weight:700;
+
+  letter-spacing:0.14em;
+
+  color:var(--leader);
+
+  font-family:var(--font-mono);
+
+  white-space:nowrap
+}
+
+.done-total-val{
+  font-size:56px;
+
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  color:var(--leader);
+
+  line-height:1;
+
+  margin-top:14px
+}
+
+.done-total-note{
+  font-size:10px;
+
+  color:var(--leader-mid);
+
+  margin-top:4px;
+
+  font-family:var(--font-mono)
+}
+
+/* =========================================================
+   VISIT DISTRIBUTION
+   ========================================================= */
+
+.done-vd-block{
+  padding:16px 24px 18px;
+
+  border-bottom:1px solid var(--border);
+
+  background:var(--bg2)
+}
+
+.done-vd-label{
+  font-size:9px;
+
+  font-weight:700;
+
+  letter-spacing:0.12em;
+
+  text-transform:uppercase;
+
+  color:var(--text3);
+
+  margin-bottom:10px;
+
+  font-family:var(--font-mono)
+}
+
+.done-vd-grid{
+  display:grid;
+
+  grid-template-columns:repeat(4,1fr);
+
+  gap:7px
+}
+
+.done-vd-cell{
+  background:var(--bg3);
+
+  border:1px solid var(--border);
+
+  border-radius:8px;
+
+  padding:9px 6px;
+
+  text-align:center;
+
+  display:flex;
+
+  flex-direction:column;
+
+  align-items:center;
+
+  justify-content:center;
+
+  gap:3px
+}
+
+.done-vd-val{
+  font-size:18px;
+
+  font-weight:700;
+
+  font-family:var(--font-mono);
+
+  line-height:1;
+
+  color:var(--leader)
+}
+
+.done-vd-lbl{
+  font-size:8px;
+
+  text-transform:uppercase;
+
+  letter-spacing:0.05em;
+
+  margin-top:2px;
+
+  color:var(--text3);
+
+  font-weight:600
+}
+
+/* =========================================================
+   ROBOT CYCLES TABLE
+   ========================================================= */
+
+.done-robot-block{
+  padding:16px 24px;
+
+  border-bottom:1px solid var(--border)
+}
+
+.done-robot-label{
+  font-size:9px;
+
+  font-weight:700;
+
+  letter-spacing:0.12em;
+
+  text-transform:uppercase;
+
+  color:var(--text3);
+
+  margin-bottom:10px;
+
+  font-family:var(--font-mono)
+}
+
+.robot-cycles-table{
+  width:100%;
+
+  border-collapse:collapse;
+
+  font-family:var(--font-mono);
+
+  font-size:11px
+}
+
+.robot-cycles-table th{
+  font-size:9px;
+
+  color:var(--text3);
+
+  font-weight:700;
+
+  letter-spacing:0.08em;
+
+  text-transform:uppercase;
+
+  padding:4px 6px;
+
+  text-align:left;
+
+  border-bottom:1.5px solid var(--border2)
+}
+
+.robot-cycles-table th:not(:first-child){
+  text-align:center
+}
+
+.robot-cycles-table td{
+  padding:7px 6px;
+
+  border-bottom:1px solid var(--border);
+
+  color:var(--text2);
+
+  vertical-align:middle
+}
+
+.robot-cycles-table td:not(:first-child){
+  text-align:center
+}
+
+.robot-cycles-table tr:last-child td{
+  border-bottom:none
+}
+
+.rct-id{
+  display:flex;
+
+  align-items:center;
+
+  gap:7px
+}
+
+.rct-dot{
+  width:22px;
+  height:22px;
+
+  border-radius:50%;
+
+  display:flex;
+
+  align-items:center;
+  justify-content:center;
+
+  font-size:9px;
+
+  font-weight:700;
+
+  color:#fff;
+
+  flex-shrink:0
+}
+
+.rct-dot.ldr{
+  background:var(--leader)
+}
+
+.rct-dot.ind{
+  background:var(--amber)
+}
+
+.rct-val-main{
+  font-size:13px;
+
+  font-weight:700;
+
+  color:var(--leader)
+}
+
+.rct-val-sub{
+  font-size:11px;
+
+  color:var(--text3)
+}
+
+.rct-val-back{
+  font-size:11px;
+
+  color:var(--coral);
+
+  font-weight:600
+}
+
+.done-actions{
+  display:flex;
+
+  gap:10px;
+
+  padding:16px 24px;
+
+  background:var(--bg2)
+}
+
+.done-actions .btn{
+  flex:1;
+
+  padding:11px 0;
+
+  font-size:13px
+}
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+#toast-container{
+  position:fixed;
+
+  bottom:22px;
+  left:50%;
+
+  transform:translateX(-50%);
+
+  display:flex;
+
+  flex-direction:column;
+
+  gap:8px;
+
+  z-index:200;
+
+  pointer-events:none
+}
+
+.toast{
+  padding:8px 20px;
+
+  border-radius:20px;
+
+  font-size:12px;
+
+  font-weight:500;
+
+  opacity:0;
+
+  transform:translateY(6px);
+
+  transition:all 0.25s;
+
+  pointer-events:none;
+
+  white-space:nowrap;
+
+  box-shadow:var(--shadow-md)
+}
+
+.toast.show{
+  opacity:1;
+
+  transform:translateY(0)
+}
+
+.toast-info{
+  background:var(--leader-light);
+
+  color:var(--leader);
+
+  border:1px solid rgba(14,124,123,0.3)
+}
+
+.toast-success{
+  background:var(--green-light);
+
+  color:var(--green);
+
+  border:1px solid rgba(63,125,32,0.3)
+}
+
+.toast-error{
+  background:var(--target-light);
+
+  color:var(--target);
+
+  border:1px solid rgba(214,69,93,0.3)
+}
+
+/* =========================================================
+   SCROLLBAR / FOCUS
+   ========================================================= */
+
+::-webkit-scrollbar{
+  width:5px;
+  height:5px
+}
+
+::-webkit-scrollbar-track{
+  background:var(--bg3)
+}
+
+::-webkit-scrollbar-thumb{
+  background:var(--border3);
+
+  border-radius:3px
+}
+
+::-webkit-scrollbar-thumb:hover{
+  background:var(--leader-mid)
+}
+
+button:focus-visible{
+  outline:2px solid var(--leader);
+
+  outline-offset:2px;
+
+  box-shadow:
+    0 0 0 4px var(--leader-glow)
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- =======================================================
+       TOPBAR
+       ======================================================= -->
+
+  <header class="topbar">
+
+    <div class="topbar-brand">
+
+      <div class="brand-icon">
+
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+        >
+          <circle
+            cx="10"
+            cy="10"
+            r="7"
+            stroke="#fff"
+            stroke-width="1.5"
+          />
+
+          <circle
+            cx="10"
+            cy="10"
+            r="2.5"
+            fill="#fff"
+          />
+
+          <line
+            x1="10"
+            y1="2"
+            x2="10"
+            y2="5"
+            stroke="#fff"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <line
+            x1="10"
+            y1="15"
+            x2="10"
+            y2="18"
+            stroke="#fff"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <line
+            x1="2"
+            y1="10"
+            x2="5"
+            y2="10"
+            stroke="#fff"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+
+          <line
+            x1="15"
+            y1="10"
+            x2="18"
+            y2="10"
+            stroke="#fff"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+        </svg>
+
+      </div>
+
+      <div>
+
+        <div class="brand-title">
+          Robot <span>Gathering</span>
+        </div>
+
+        <div class="brand-sub">
+          LOOK · COMPUTE · MOVE
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="topbar-sep"></div>
+
+    <div class="topbar-keys">
+
+      <kbd>Space</kbd>
+      <span>step</span>
+
+      <kbd>P</kbd>
+      <span>play</span>
+
+      <kbd>R</kbd>
+      <span>reset</span>
+
+      <kbd>U</kbd>
+      <span>undo</span>
+
+      <kbd>←→</kbd>
+      <span>speed</span>
+
+    </div>
+
+    <div class="topbar-right">
+
+      <div
+        class="case-tag"
+        id="case-tag"
+      >
+        4×4 · random robots
+      </div>
+
+      <button
+        class="icon-btn"
+        onclick="toggleConfig()"
+        title="Configure"
+      >
+
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+        >
+
+          <circle
+            cx="8"
+            cy="8"
+            r="2.5"
+            stroke="currentColor"
+            stroke-width="1.4"
+          />
+
+          <path
+            d="M8 1v2M8 13v2M1 8h2M13 8h2M3.05 3.05l1.41 1.41M11.54 11.54l1.41 1.41M3.05 12.95l1.41-1.41M11.54 4.46l1.41-1.41"
+            stroke="currentColor"
+            stroke-width="1.4"
+            stroke-linecap="round"
+          />
+
+        </svg>
+
+      </button>
+
+    </div>
+
+  </header>
+
+
+  <!-- =======================================================
+       CONFIGURATION PANEL
+       ======================================================= -->
+
+  <div
+    class="config-overlay"
+    id="cfg-overlay"
+    onclick="closeConfig()"
+  ></div>
+
+  <div
+    class="config-drawer"
+    id="cfg-drawer"
+  >
+
+    <div class="cfg-header">
+
+      <span class="cfg-title">
+        Configuration
+      </span>
+
+      <button
+        class="icon-btn"
+        onclick="closeConfig()"
+      >
+        ✕
+      </button>
+
+    </div>
+
+
+    <div class="cfg-body">
+
+      <!-- GRID SIZE -->
+
+      <div class="cfg-field">
+
+        <label>
+          Grid Size
+
+          <span class="cfg-hint">
+            rows × columns
+          </span>
+        </label>
+
+        <input
+          id="cfg-grid-size"
+          value="4x4"
+          class="cfg-input"
+          placeholder="e.g. 15x25"
+          inputmode="text"
+        >
+
+        <div class="cfg-note">
+          Example: 15x25, 15x50, 25x25, 25x50, 50x50.
+        </div>
+
+      </div>
+
+
+      <!-- TARGET LOCATION -->
+
+      <div class="cfg-field">
+
+        <label>
+          Target Location
+
+          <span class="cfg-hint">
+            exact target is randomized
+          </span>
+        </label>
+
+
+        <div class="cfg-choice-row">
+
+          <label
+            class="cfg-choice selected"
+            id="target-border-choice"
+          >
+
+            <input
+              type="radio"
+              name="target-location"
+              value="border"
+              checked
+              onchange="selectTargetType(this)"
+            >
+
+            Border
+
+          </label>
+
+
+          <label
+            class="cfg-choice"
+            id="target-middle-choice"
+          >
+
+            <input
+              type="radio"
+              name="target-location"
+              value="middle"
+              onchange="selectTargetType(this)"
+            >
+
+            Middle
+
+          </label>
+
+        </div>
+
+
+        <div class="cfg-inline-note">
+          The exact target cell is randomly selected from the chosen location.
+        </div>
+
+      </div>
+
+
+      <!-- NUMBER OF ROBOTS -->
+
+      <div class="cfg-field">
+
+        <label>
+
+          Number of Robots
+
+          <span class="cfg-hint">
+            randomly distributed
+          </span>
+
+        </label>
+
+        <input
+          id="cfg-robot-count"
+          type="number"
+          min="1"
+          step="1"
+          value="2"
+          class="cfg-input"
+          placeholder="e.g. 19"
+        >
+
+        <div class="cfg-note">
+          At least one robot starts on the target or an adjacent cell.
+        </div>
+
+      </div>
+
+
+      <!-- NUMBER OF TRIALS -->
+
+      <div class="cfg-field">
+
+        <label>
+
+          Number of Trials
+
+          <span class="cfg-hint">
+            experiment repetitions
+          </span>
+
+        </label>
+
+        <input
+          id="cfg-trials"
+          type="number"
+          min="1"
+          step="1"
+          value="10"
+          class="cfg-input cfg-trials"
+          placeholder="e.g. 10"
+        >
+
+        <div class="cfg-note">
+          Generate Configuration runs one simulation.
+          Run Experiment repeats the same configuration.
+        </div>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+
+      <div class="cfg-actions">
+
+        <button
+          class="btn btn-primary cfg-full"
+          onclick="newRandomConfig()"
+        >
+          Generate Configuration
+        </button>
+
+        <button
+          class="btn btn-run cfg-full"
+          onclick="runExperimentFromConfig()"
+        >
+          Run Experiment
+        </button>
+
+      </div>
+
+
+      <!-- CURRENT TARGET -->
+
+      <div class="cfg-field">
+
+        <label>
+
+          Current Target Node
+
+          <span class="cfg-hint">
+            generated coordinate
+          </span>
+
+        </label>
+
+        <input
+          id="cfg-target"
+          value="0,0"
+          class="cfg-input"
+          readonly
+        >
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       GRID PANEL
+       ======================================================= -->
+
+  <div class="grid-panel">
+
+    <div class="grid-header">
+
+      <div
+        class="phase-badge"
+        id="phase-badge"
+      >
+
+        <div
+          class="phase-dot"
+          id="phase-dot"
+        ></div>
+
+        <span id="phase-text">
+          INIT
+        </span>
+
+      </div>
+
+
+      <div class="grid-header-right">
+
+        <div class="mini-stat">
+
+          <span id="h-step">
+            0
+          </span>
+
+          <label>
+            cycles
+          </label>
+
+        </div>
+
+
+        <div class="mini-stat">
+
+          <span id="h-back">
+            0
+          </span>
+
+          <label>
+            backtracks
+          </label>
+
+        </div>
+
+
+        <div class="mini-stat">
+
+          <span id="h-coll">
+            0/7
+          </span>
+
+          <label>
+            at target
+          </label>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="grid-scroll">
+
+      <div
+        class="grid-outer"
+        id="grid-outer"
+      >
+
+        <div
+          class="col-labels"
+          id="col-labels"
+        ></div>
+
+
+        <div class="grid-body">
+
+          <div
+            class="row-labels"
+            id="row-labels"
+          ></div>
+
+          <div
+            class="grid"
+            id="grid"
+          ></div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div
+      class="leader-flash-overlay"
+      id="leader-flash-overlay"
+    >
+
+      <div class="torch-container">
+
+        <div class="torch-flame"></div>
+
+        <div class="torch-text">
+          LEADER SELECTED!
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="event-banner">
+
+      <div
+        class="event-icon"
+        id="event-icon"
+      >
+        i
+      </div>
+
+      <div
+        class="event-text"
+        id="event-text"
+      >
+        System initialized. Ready.
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       SIDEBAR
+       ======================================================= -->
+
+  <div class="sidebar">
+
+
+    <!-- CONTROLS -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+        Controls
+      </div>
+
+
+      <div class="ctrl-grid">
+
+        <button
+          class="btn btn-primary"
+          id="btn-step"
+          onclick="doStep()"
+        >
+
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 12 12"
+          >
+
+            <polygon
+              points="3,2 10,6 3,10"
+              fill="currentColor"
+            />
+
+          </svg>
+
+          Step
+
+        </button>
+
+
+        <button
+          class="btn btn-play"
+          id="btn-play"
+          onclick="togglePlay()"
+        >
+
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 12 12"
+            id="play-icon"
+          >
+
+            <polygon
+              points="3,2 10,6 3,10"
+              fill="currentColor"
+            />
+
+          </svg>
+
+          <span id="play-label">
+            Play
+          </span>
+
+        </button>
+
+
+        <button
+          class="btn btn-danger"
+          onclick="doReset()"
+        >
+
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 12 12"
+          >
+
+            <path
+              d="M2 6a4 4 0 1 1 1 2.8"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+
+            <polyline
+              points="2,3 2,6 5,6"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+
+          </svg>
+
+          Reset
+
+        </button>
+
+
+        <button
+          class="btn"
+          id="btn-undo"
+          onclick="doUndo()"
+          disabled
+        >
+
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 12 12"
+          >
+
+            <path
+              d="M2 4h5a3 3 0 0 1 0 6H4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+
+            <polyline
+              points="2,1.5 2,4.5 5,4.5"
+              stroke="currentColor"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+            />
+
+          </svg>
+
+          Undo
+
+        </button>
+
+      </div>
+
+
+      <button
+        class="btn btn-run"
+        onclick="doRunAll()"
+      >
+
+        <svg
+          width="11"
+          height="11"
+          viewBox="0 0 12 12"
+        >
+
+          <polygon
+            points="1,2 11,6 1,10"
+            fill="currentColor"
+          />
+
+          <line
+            x1="11"
+            y1="2"
+            x2="11"
+            y2="10"
+            stroke="currentColor"
+            stroke-width="1.5"
+          />
+
+        </svg>
+
+        Run All Steps (Replay Mode)
+
+      </button>
+
+
+      <div class="speed-row">
+
+        <span class="speed-lbl">
+          Speed
+        </span>
+
+        <input
+          type="range"
+          id="speed-slider"
+          min="1"
+          max="10"
+          value="3"
+          step="1"
+          oninput="setSpeed(this.value)"
+        >
+
+        <span
+          class="speed-val"
+          id="speed-val"
+        >
+          3/s
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <!-- LEADER ELECTION -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+        Leader Election
+      </div>
+
+      <div
+        class="election-panel"
+        id="election-panel"
+      >
+
+        <div class="election-panel-title">
+
+          <span class="dot"></span>
+
+          <span id="election-status-text">
+            No contest yet
+          </span>
+
+        </div>
+
+
+        <div
+          class="election-candidates"
+          id="election-candidates"
+        >
+
+          <span class="election-empty">
+            Waiting for robots to reach the target…
+          </span>
+
+        </div>
+
+
+        <div
+          class="election-winner-line"
+          id="election-winner-line"
+        ></div>
+
+      </div>
+
+    </div>
+
+
+    <!-- STATISTICS -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+        Statistics
+      </div>
+
+
+      <div class="stats-4">
+
+        <div class="stat-card c-amber">
+
+          <div
+            class="sc-val"
+            id="s-steps"
+          >
+            0
+          </div>
+
+          <div class="sc-lbl">
+            Comp. Cycles
+          </div>
+
+        </div>
+
+
+        <div class="stat-card c-coral">
+
+          <div
+            class="sc-val"
+            id="s-back"
+          >
+            0
+          </div>
+
+          <div class="sc-lbl">
+            Backtracks
+          </div>
+
+        </div>
+
+
+        <div class="stat-card c-teal">
+
+          <div
+            class="sc-val"
+            id="s-coll"
+          >
+            0/7
+          </div>
+
+          <div class="sc-lbl">
+            Robots at Target
+          </div>
+
+        </div>
+
+
+        <div class="stat-card c-purple">
+
+          <div
+            class="sc-val"
+            id="s-marked"
+          >
+            0
+          </div>
+
+          <div class="sc-lbl">
+            Marked Nodes
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- ROBOT STATUS -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+        Robot Status
+      </div>
+
+      <div id="robot-status-list"></div>
+
+    </div>
+
+
+    <!-- WB MATRIX -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+
+        WB Whiteboard Matrix
+
+        <span class="sb-label-hint">
+          live
+        </span>
+
+      </div>
+
+
+      <div class="wb-matrix-wrap">
+
+        <table
+          class="wb-matrix"
+          id="wb-matrix"
+        ></table>
+
+      </div>
+
+
+      <div class="wb-legend">
+
+        <div class="wbl-item">
+
+          <div
+            class="wbl-dot"
+            style="background:var(--target)"
+          ></div>
+
+          WB = 0 — Target / root
+
+        </div>
+
+
+        <div class="wbl-item">
+
+          <div
+            class="wbl-dot"
+            style="background:var(--follower)"
+          ></div>
+
+          WB >= 1 — Explored / marked node
+
+        </div>
+
+
+        <div class="wbl-item">
+
+          <div
+            class="wbl-dot"
+            style="background:var(--bg4);border:1px solid var(--border)"
+          ></div>
+
+          — Unvisited node
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <!-- VISIT MATRIX -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+
+        Visit Count Matrix
+
+        <span class="sb-label-hint">
+          visit count — first entry = 1
+        </span>
+
+      </div>
+
+
+      <div class="wb-matrix-wrap">
+
+        <table
+          class="wb-matrix"
+          id="visit-matrix"
+        ></table>
+
+      </div>
+
+    </div>
+
+
+    <!-- LEGEND -->
+
+    <div class="sb-block">
+
+      <div class="sb-label">
+        Legend
+      </div>
+
+
+      <div class="legend-grid">
+
+
+        <div class="leg-item">
+
+          <div class="leg-robot leader-r">
+            L
+          </div>
+
+          <div>
+
+            <div class="leg-name">
+              Leader
+            </div>
+
+            <div class="leg-desc">
+              DFS explorer
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="leg-item">
+
+          <div class="leg-robot indep-r">
+            R
+          </div>
+
+          <div>
+
+            <div class="leg-name">
+              Independent
+            </div>
+
+            <div class="leg-desc">
+              follows WB gradient
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="leg-item">
+
+          <div class="leg-robot target-r">
+            T
+          </div>
+
+          <div>
+
+            <div class="leg-name">
+              Target
+            </div>
+
+            <div class="leg-desc">
+              WB = 0
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="leg-item">
+
+          <div class="leg-cell visited-c"></div>
+
+          <div>
+
+            <div class="leg-name">
+              Visited
+            </div>
+
+            <div class="leg-desc">
+              WB stamped
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="leg-item">
+
+          <div class="leg-cell stuck-c"></div>
+
+          <div>
+
+            <div class="leg-name">
+              Backtrack
+            </div>
+
+            <div class="leg-desc">
+              stuck cell
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="leg-item">
+
+          <div class="leg-cell unvisited-c"></div>
+
+          <div>
+
+            <div class="leg-name">
+              Unvisited
+            </div>
+
+            <div class="leg-desc">
+              WB = -1
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       REPLAY BAR
+       ======================================================= -->
+
+  <div
+    class="replay-bar"
+    id="replay-bar"
+  >
+
+    <span class="replay-label">
+      Replay
+    </span>
+
+
+    <button
+      class="icon-btn"
+      onclick="replayPrev()"
+    >
+      ◀
+    </button>
+
+
+    <input
+      type="range"
+      id="replay-slider"
+      min="0"
+      max="0"
+      value="0"
+      oninput="replaySeek(this.value)"
+      style="flex:1"
+    >
+
+
+    <span
+      class="replay-pos"
+      id="replay-pos"
+    >
+      0/0
+    </span>
+
+
+    <button
+      class="icon-btn"
+      onclick="replayNext()"
+    >
+      ▶
+    </button>
+
+
+    <button
+      class="btn btn-danger"
+      style="padding:4px 12px;font-size:11px"
+      onclick="exitReplay()"
+    >
+      ✕ Exit
+    </button>
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     DONE OVERLAY
+     ========================================================= -->
+
+<div
+  class="done-overlay"
+  id="done-overlay"
+>
+
+  <div class="done-card">
+
+
+    <div class="done-header">
+
+      <div class="done-icon-ring">
+        ✓
+      </div>
+
+      <div class="done-title">
+        All Robots Gathered!
+      </div>
+
+      <div
+        class="done-meta"
+        id="done-meta"
+      >
+        — robots · —×— grid · Target —
+      </div>
+
+    </div>
+
+
+    <div class="done-total-block">
+
+      <div
+        class="done-total-val"
+        id="done-cycles"
+      >
+        —
+      </div>
+
+      <div class="done-total-note">
+        Every robot participated in each of these rounds
+      </div>
+
+    </div>
+
+
+    <div class="done-vd-block">
+
+      <div class="done-vd-label">
+        Visit Count Distribution
+      </div>
+
+
+      <div class="done-vd-grid">
+
+
+        <div class="done-vd-cell">
+
+          <div
+            class="done-vd-val"
+            id="done-vd-once"
+          >
+            0
+          </div>
+
+          <div class="done-vd-lbl">
+            Visited 1×
+          </div>
+
+        </div>
+
+
+        <div class="done-vd-cell">
+
+          <div
+            class="done-vd-val"
+            id="done-vd-twice"
+          >
+            0
+          </div>
+
+          <div class="done-vd-lbl">
+            Visited 2×
+          </div>
+
+        </div>
+
+
+        <div class="done-vd-cell">
+
+          <div
+            class="done-vd-val"
+            id="done-vd-thrice"
+          >
+            0
+          </div>
+
+          <div class="done-vd-lbl">
+            Visited 3×
+          </div>
+
+        </div>
+
+
+        <div class="done-vd-cell">
+
+          <div
+            class="done-vd-val"
+            id="done-vd-more"
+          >
+            0
+          </div>
+
+          <div class="done-vd-lbl">
+            Visited &gt;3×
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="done-robot-block">
+
+      <div class="done-robot-label">
+        Robot-wise computation cycles
+      </div>
+
+
+      <table
+        class="robot-cycles-table"
+        id="done-robot-table"
+      >
+
+        <thead>
+
+          <tr>
+
+            <th>
+              Robot
+            </th>
+
+            <th>
+              Comp. Cycles
+            </th>
+
+            <th>
+              Moves
+            </th>
+
+            <th>
+              Backtracks
+            </th>
+
+          </tr>
+
+        </thead>
+
+
+        <tbody
+          id="done-robot-tbody"
+        ></tbody>
+
+      </table>
+
+    </div>
+
+
+    <div class="done-actions">
+
+      <button
+        class="btn"
+        onclick="closeDone()"
+      >
+        Close
+      </button>
+
+      <button
+        class="btn btn-primary"
+        onclick="doReset()"
+      >
+        ↺ Run Again
+      </button>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div id="toast-container"></div>
+
+
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
+<script>
+
+'use strict';
+
+
+const RG={
+
+  state:null,
+
+  playing:false,
+
+  speed:3,
+
+  timer:null,
+
+  replay:[],
+
+  replayIdx:0,
+
+  replayMode:false,
+
+  rows:4,
+
+  cols:4,
+
+  prevWb:null,
+
+  experimentTrials:10,
+
+  experimentConfig:null
+
+};
+
+
+/* =========================================================
+   SVG ICONS
+   ========================================================= */
+
+function svgLeader(){
+
+  return `
+    <svg
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+
+      <circle
+        cx="20"
+        cy="20"
+        r="16"
+        fill="#E3F6F5"
+        stroke="#0E7C7B"
+        stroke-width="1.5"
+      />
+
+      <rect
+        x="13"
+        y="14"
+        width="14"
+        height="10"
+        rx="3"
+        fill="#14A3A1"
+        opacity="0.9"
+      />
+
+      <rect
+        x="16"
+        y="24"
+        width="3"
+        height="5"
+        rx="1"
+        fill="#14A3A1"
+        opacity="0.8"
+      />
+
+      <rect
+        x="21"
+        y="24"
+        width="3"
+        height="5"
+        rx="1"
+        fill="#14A3A1"
+        opacity="0.8"
+      />
+
+      <circle
+        cx="17"
+        cy="17"
+        r="1.5"
+        fill="#fff"
+      />
+
+      <circle
+        cx="23"
+        cy="17"
+        r="1.5"
+        fill="#fff"
+      />
+
+      <rect
+        x="15"
+        y="11"
+        width="10"
+        height="4"
+        rx="2"
+        fill="#0E7C7B"
+        opacity="0.8"
+      />
+
+      <circle
+        cx="20"
+        cy="11"
+        r="1.5"
+        fill="#14A3A1"
+      />
+
+    </svg>
+  `;
+
+}
+
+
+function svgRobot(){
+
+  return `
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+
+      <circle
+        cx="18"
+        cy="18"
+        r="14"
+        fill="#F1EAFE"
+        stroke="#6D28D9"
+        stroke-width="1.5"
+      />
+
+      <rect
+        x="12"
+        y="13"
+        width="12"
+        height="8"
+        rx="2.5"
+        fill="#6D28D9"
+        opacity="0.85"
+      />
+
+      <rect
+        x="14.5"
+        y="21"
+        width="2.5"
+        height="4"
+        rx="1"
+        fill="#6D28D9"
+        opacity="0.7"
+      />
+
+      <rect
+        x="19"
+        y="21"
+        width="2.5"
+        height="4"
+        rx="1"
+        fill="#6D28D9"
+        opacity="0.7"
+      />
+
+      <circle
+        cx="16"
+        cy="16"
+        r="1.3"
+        fill="#fff"
+      />
+
+      <circle
+        cx="20"
+        cy="16"
+        r="1.3"
+        fill="#fff"
+      />
+
+      <rect
+        x="14"
+        y="10"
+        width="8"
+        height="3.5"
+        rx="1.5"
+        fill="#4C1D95"
+        opacity="0.7"
+      />
+
+      <circle
+        cx="18"
+        cy="10"
+        r="1.2"
+        fill="#fff"
+        opacity="0.8"
+      />
+
+    </svg>
+  `;
+
+}
+
+
+function svgTarget(){
+
+  return `
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+
+      <circle
+        cx="18"
+        cy="18"
+        r="14"
+        fill="#FDECEF"
+        stroke="#D6455D"
+        stroke-width="2"
+      />
+
+      <circle
+        cx="18"
+        cy="18"
+        r="8"
+        stroke="#D6455D"
+        stroke-width="1.5"
+        stroke-dasharray="2 2"
+      />
+
+      <circle
+        cx="18"
+        cy="18"
+        r="4"
+        fill="#D6455D"
+        opacity="0.8"
+      />
+
+    </svg>
+  `;
+
+}
+
+
+function svgDone(){
+
+  return `
+    <svg
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+
+      <circle
+        cx="18"
+        cy="18"
+        r="14"
+        fill="#EDF6E3"
+        stroke="#3F7D20"
+        stroke-width="2"
+      />
+
+      <polyline
+        points="11,18 16,23 25,13"
+        stroke="#3F7D20"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+
+    </svg>
+  `;
+
+}
+
+
+/* =========================================================
+   API
+   ========================================================= */
+
+async function api(
+  url,
+  method='GET',
+  body=null
+){
+
+  const opts={
+    method,
+    headers:{
+      'Content-Type':'application/json'
+    }
+  };
+
+  if(body){
+    opts.body=JSON.stringify(body);
+  }
+
+  try{
+
+    const r=await fetch(url,opts);
+
+    if(!r.ok){
+
+      let e={};
+
+      try{
+        e=await r.json();
+      }catch(_){}
+
+      showToast(
+        e.error || 'Error',
+        'error'
+      );
+
+      return null;
+    }
+
+    return await r.json();
+
+  }catch(e){
+
+    console.error(e);
+
+    showToast(
+      'Network error',
+      'error'
+    );
+
+    return null;
+  }
+
+}
+
+
+/* =========================================================
+   STEP
+   ========================================================= */
+
+async function doStep(){
+
+  if(RG.replayMode){
+
+    replayNext();
+
+    return;
+  }
+
+  if(RG.state?.phase==='DONE'){
+
+    return;
+  }
+
+  const s=await api(
+    '/api/step',
+    'POST'
+  );
+
+  if(s){
+
+    RG.state=s;
+
+    render(s);
+
+    updateControls();
+  }
+
+}
+
+
+/* =========================================================
+   PLAY
+   ========================================================= */
+
+function togglePlay(){
+
+  if(
+    RG.state?.phase==='DONE'
+    &&
+    !RG.replayMode
+  ){
+    return;
+  }
+
+  RG.playing=!RG.playing;
+
+  const btn=
+    document.getElementById('btn-play');
+
+  const lbl=
+    document.getElementById('play-label');
+
+  const ico=
+    document.getElementById('play-icon');
+
+
+  if(RG.playing){
+
+    btn.classList.add('active');
+
+    lbl.textContent='Pause';
+
+    ico.innerHTML=`
+      <rect
+        x="3"
+        y="2"
+        width="2.5"
+        height="8"
+        fill="currentColor"
+      />
+
+      <rect
+        x="6.5"
+        y="2"
+        width="2.5"
+        height="8"
+        fill="currentColor"
+      />
+    `;
+
+    scheduleNext();
+
+  }else{
+
+    stopPlay();
+
+  }
+
+}
+
+
+function scheduleNext(){
+
+  if(!RG.playing){
+    return;
+  }
+
+  RG.timer=setTimeout(
+    async()=>{
+
+      await doStep();
+
+      if(
+        RG.state?.phase==='DONE'
+        &&
+        !RG.replayMode
+      ){
+
+        stopPlay();
+
+        return;
+      }
+
+      scheduleNext();
+
+    },
+
+    1000/RG.speed
+  );
+
+}
+
+
+function stopPlay(){
+
+  RG.playing=false;
+
+  clearTimeout(RG.timer);
+
+  const btn=
+    document.getElementById('btn-play');
+
+  const lbl=
+    document.getElementById('play-label');
+
+  const ico=
+    document.getElementById('play-icon');
+
+  if(btn){
+    btn.classList.remove('active');
+  }
+
+  if(lbl){
+    lbl.textContent='Play';
+  }
+
+  if(ico){
+
+    ico.innerHTML=`
+      <polygon
+        points="3,2 10,6 3,10"
+        fill="currentColor"
+      />
+    `;
+  }
+
+}
+
+
+/* =========================================================
+   SPEED
+   ========================================================= */
+
+function setSpeed(v){
+
+  RG.speed=parseInt(v,10);
+
+  document.getElementById(
+    'speed-val'
+  ).textContent=v+'/s';
+
+  if(RG.playing){
+
+    clearTimeout(RG.timer);
+
+    scheduleNext();
+  }
+
+}
+
+
+/* =========================================================
+   RESET
+   ========================================================= */
+
+async function doReset(config={}){
+
+  stopPlay();
+
+  RG.replayMode=false;
+
+  RG.replay=[];
+
+  RG.replayIdx=0;
+
+  RG.prevWb=null;
+
+  document
+    .getElementById('done-overlay')
+    .classList.remove('show');
+
+  document
+    .getElementById('replay-bar')
+    .classList.remove('show');
+
+
+  const s=await api(
+    '/api/reset',
+    'POST',
+    config
+  );
+
+
+  if(s){
+
+    RG.state=s;
+
+    RG.rows=s.rows;
+
+    RG.cols=s.cols;
+
+    buildGrid(
+      s.rows,
+      s.cols
+    );
+
+    render(s);
+
+    updateControls();
+
+    syncConfigFromState(s);
+  }
+
+}
+
+
+/* =========================================================
+   DONE
+   ========================================================= */
+
+function closeDone(){
+
+  document
+    .getElementById('done-overlay')
+    .classList.remove('show');
+
+}
+
+
+/* =========================================================
+   UNDO
+   ========================================================= */
+
+async function doUndo(){
+
+  if(RG.replayMode){
+    return;
+  }
+
+  stopPlay();
+
+  const s=await api(
+    '/api/undo',
+    'POST'
+  );
+
+  if(s){
+
+    RG.state=s;
+
+    render(s);
+
+    updateControls();
+  }
+
+}
+
+
+/* =========================================================
+   RUN ALL
+   ========================================================= */
+
+async function doRunAll(){
+
+  stopPlay();
+
+  showToast(
+    'Computing all steps...',
+    'info'
+  );
+
+  const data=await api(
+    '/api/run_all',
+    'POST',
+    {
+      rows:RG.rows,
+      cols:RG.cols
+    }
+  );
+
+  if(!data){
+    return;
+  }
+
+  RG.replay=data.steps;
+
+  RG.replayIdx=0;
+
+  RG.replayMode=true;
+
+  RG.state=RG.replay[0];
+
+  render(RG.state);
+
+  updateControls();
+
+
+  const bar=
+    document.getElementById('replay-bar');
+
+  bar.classList.add('show');
+
+
+  const sl=
+    document.getElementById(
+      'replay-slider'
+    );
+
+  sl.max=data.total-1;
+
+  sl.value=0;
+
+
+  document.getElementById(
+    'replay-pos'
+  ).textContent=
+    `0 / ${data.total-1}`;
+
+
+  showToast(
+    `${data.total} steps loaded`,
+    'success'
+  );
+
+}
+
+
+/* =========================================================
+   REPLAY
+   ========================================================= */
+
+function replayNext(){
+
+  if(
+    RG.replayIdx <
+    RG.replay.length-1
+  ){
+
+    RG.replayIdx++;
+
+    RG.state=
+      RG.replay[RG.replayIdx];
+
+    render(RG.state);
+
+
+    const sl=
+      document.getElementById(
+        'replay-slider'
+      );
+
+    sl.value=RG.replayIdx;
+
+
+    document.getElementById(
+      'replay-pos'
+    ).textContent=
+      `${RG.replayIdx} / ${RG.replay.length-1}`;
+  }
+
+}
+
+
+function replayPrev(){
+
+  if(RG.replayIdx>0){
+
+    RG.replayIdx--;
+
+    RG.state=
+      RG.replay[RG.replayIdx];
+
+    render(RG.state);
+
+
+    const sl=
+      document.getElementById(
+        'replay-slider'
+      );
+
+    sl.value=RG.replayIdx;
+
+
+    document.getElementById(
+      'replay-pos'
+    ).textContent=
+      `${RG.replayIdx} / ${RG.replay.length-1}`;
+  }
+
+}
+
+
+function replaySeek(v){
+
+  RG.replayIdx=parseInt(v,10);
+
+  RG.state=
+    RG.replay[RG.replayIdx];
+
+  render(RG.state);
+
+
+  document.getElementById(
+    'replay-pos'
+  ).textContent=
+    `${RG.replayIdx} / ${RG.replay.length-1}`;
+
+}
+
+
+function exitReplay(){
+
+  RG.replayMode=false;
+
+  RG.replay=[];
+
+  RG.replayIdx=0;
+
+  document
+    .getElementById('replay-bar')
+    .classList.remove('show');
+
+  doReset();
+
+}
+function setGridCellSize(rows, cols){
+
+  let size = 72;
+
+  // Small grids
+  if(rows <= 8 && cols <= 10){
+    size = 72;
+  }
+
+  // Medium grids
+  else if(rows <= 15 && cols <= 25){
+    size = 50;
+  }
+
+  // 25x25 type grids
+  else if(rows <= 25 && cols <= 25){
+    size = 38;
+  }
+
+  // 25x50 / 50x25
+  else if(rows <= 25 && cols <= 50){
+    size = 30;
+  }
+
+  // 50x50
+  else if(rows <= 50 && cols <= 50){
+    size = 22;
+  }
+
+  // Larger grids
+  else{
+    size = 20;
+  }
+
+  document.documentElement.style.setProperty(
+    '--cell',
+    `${size}px`
+  );
+}
+
+/* =========================================================
+   GRID BUILD
+   ========================================================= */
+
+function buildGrid(rows,cols){
+
+  RG.rows=rows;
+
+  RG.cols=cols;
+
+
+  const grid=
+    document.getElementById('grid');
+
+  grid.style.setProperty(
+    '--cols',
+    cols
+  );
+
+  grid.innerHTML='';
+
+
+  const colLabels=
+    document.getElementById('col-labels');
+
+  const rowLabels=
+    document.getElementById('row-labels');
+
+
+  colLabels.innerHTML='';
+
+  rowLabels.innerHTML='';
+
+
+  for(
+    let c=0;
+    c<cols;
+    c++
+  ){
+
+    const d=
+      document.createElement('div');
+
+    d.className='col-label';
+
+    d.textContent=`c${c}`;
+
+    colLabels.appendChild(d);
+  }
+
+
+  for(
+    let r=0;
+    r<rows;
+    r++
+  ){
+
+    const d=
+      document.createElement('div');
+
+    d.className='row-label';
+
+    d.textContent=`r${r}`;
+
+    rowLabels.appendChild(d);
+  }
+
+
+  for(
+    let r=0;
+    r<rows;
+    r++
+  ){
+
+    for(
+      let c=0;
+      c<cols;
+      c++
+    ){
+
+      const cell=
+        document.createElement('div');
+
+      cell.className='cell';
+
+      cell.id=
+        `cell-${r}-${c}`;
+
+
+      cell.innerHTML=`
+
+        <div
+          class="wb-num"
+          id="wb-${r}-${c}"
+        ></div>
+
+        <div
+          class="visit-badge"
+          id="vb-${r}-${c}"
+        ></div>
+
+        <div
+          class="cell-content"
+          id="ct-${r}-${c}"
+        ></div>
+
+        <div class="cell-coord">
+          (${r},${c})
+        </div>
+
+      `;
+
+
+      grid.appendChild(cell);
+    }
+  }
+
+}
+
+
+/* =========================================================
+   RENDER
+   ========================================================= */
+
+function render(s){
+
+  if(!s){
+    return;
+  }
+
+
+  if(
+    s.rows!==RG.rows
+    ||
+    s.cols!==RG.cols
+  ){
+
+    buildGrid(
+      s.rows,
+      s.cols
+    );
+
+  }
+
+
+  renderCells(s);
+
+  renderPhase(s);
+
+  renderStats(s);
+
+  renderElection(s);
+
+  renderRobotList(s);
+
+  renderWBMatrix(s);
+
+  renderVisitMatrix(s);
+
+  renderEventBanner(s);
+
+
+  if(s.leader_flash){
+
+    triggerLeaderFlash();
+  }
+
+
+  if(s.phase==='DONE'){
+
+    triggerDone(s);
+  }
+
+
+  RG.prevWb=
+    s.wb.map(
+      r=>[...r]
+    );
+
+}
+
+
+/* =========================================================
+   RENDER CELLS
+   ========================================================= */
+
+function renderCells(s){
+
+  const posMap={};
+
+
+  for(const ro of s.robots){
+
+    const k=
+      `${ro.pos[0]},${ro.pos[1]}`;
+
+    if(!posMap[k]){
+      posMap[k]=[];
+    }
+
+    posMap[k].push(ro);
+  }
+
+
+  const hlSet=
+    new Set(
+      (s.highlight_cells||[])
+      .map(
+        p=>`${p[0]},${p[1]}`
+      )
+    );
+
+
+  const electing=
+    s.election_contenders>0;
+
+
+  for(
+    let r=0;
+    r<s.rows;
+    r++
+  ){
+
+    for(
+      let c=0;
+      c<s.cols;
+      c++
+    ){
+
+      const cell=
+        document.getElementById(
+          `cell-${r}-${c}`
+        );
+
+      const wbEl=
+        document.getElementById(
+          `wb-${r}-${c}`
+        );
+
+      const vbEl=
+        document.getElementById(
+          `vb-${r}-${c}`
+        );
+
+      const ct=
+        document.getElementById(
+          `ct-${r}-${c}`
+        );
+
+
+      if(!cell){
+        continue;
+      }
+
+
+      const wb=s.wb[r][c];
+
+
+      const isT=
+        r===s.target[0]
+        &&
+        c===s.target[1];
+
+
+      const isLeaderCell=
+        s.leader_pos
+        &&
+        r===s.leader_pos[0]
+        &&
+        c===s.leader_pos[1];
+
+
+      const isHl=
+        hlSet.has(`${r},${c}`);
+
+
+      const prevWb=
+        RG.prevWb
+        ?
+        RG.prevWb[r][c]
+        :
+        -1;
+
+
+      cell.className='cell';
+
+
+      if(isT){
+
+        cell.classList.add(
+          'c-target'
+        );
+
+      }else if(
+        isLeaderCell
+        &&
+        s.last_action==='BACKTRACK'
+      ){
+
+        cell.classList.add(
+          'c-stuck'
+        );
+
+      }else if(isLeaderCell){
+
+        cell.classList.add(
+          'c-leader'
+        );
+
+      }else if(wb>=0){
+
+        cell.classList.add(
+          'c-visited'
+        );
+      }
+
+
+      if(
+        isHl
+        &&
+        !isT
+      ){
+
+        cell.classList.add(
+          'c-highlight'
+        );
+      }
+
+
+      if(
+        wb!==prevWb
+        &&
+        wb>0
+        &&
+        !isT
+      ){
+
+        const fc=
+          s.last_action==='BACKTRACK'
+          ?
+          'flash-back'
+          :
+          'flash-fwd';
+
+
+        cell.classList.remove(fc);
+
+
+        void cell.offsetWidth;
+
+
+        cell.classList.add(fc);
+
+
+        setTimeout(
+          ()=>{
+            cell.classList.remove(fc);
+          },
+          700
+        );
+
+      }
+
+
+      if(wb>=0){
+
+        const pv=
+          (
+            s.wb_parent
+            &&
+            s.wb_parent[r]
+            &&
+            s.wb_parent[r][c]!==undefined
+          )
+          ?
+          s.wb_parent[r][c]
+          :
+          -1;
+
+
+        wbEl.innerHTML=
+
+          pv>=0
+
+          ?
+
+          `<span>${wb}</span>
+           <span
+             class="wb-parent-tag"
+             title="WBparent_no — parent node's WBnode_no"
+           >
+             P:${pv}
+           </span>`
+
+          :
+
+          `<span>${wb}</span>`;
+
+      }else{
+
+        wbEl.textContent='';
+
+      }
+
+
+      if(vbEl){
+
+        const vc=
+          (
+            s.visit_count
+            &&
+            s.visit_count[r]
+            &&
+            s.visit_count[r][c]
+          )
+          ||
+          0;
+
+
+        vbEl.textContent=
+          vc>0
+          ?
+          `v${vc}`
+          :
+          '';
+
+
+        vbEl.className=
+          'visit-badge'
+          +
+          (
+            vc>1
+            ?
+            ' multi-visit'
+            :
+            ''
+          );
+
+      }
+
+
+      /* Election badge */
+
+      let badge=
+        cell.querySelector(
+          '.election-badge'
+        );
+
+
+      if(
+        isT
+        &&
+        electing
+      ){
+
+        if(!badge){
+
+          badge=
+            document.createElement('div');
+
+          badge.className=
+            'election-badge';
+
+          cell.appendChild(badge);
+
+        }
+
+
+        badge.textContent=
+          `⚡ ${s.election_contenders}`;
+
+
+        badge.title=
+          `Leader election in progress — ${s.election_contenders} robot(s) contesting for smallest ID`;
+
+      }else if(badge){
+
+        badge.remove();
+
+      }
+
+
+      ct.innerHTML='';
+
+
+      const robs=
+        posMap[`${r},${c}`]
+        ||
+        [];
+
+
+      if(
+        robs.length===0
+        &&
+        isT
+      ){
+
+        const w=
+          document.createElement('div');
+
+        w.className=
+          'robot-icon anim-target';
+
+        w.innerHTML=
+          svgTarget();
+
+        ct.appendChild(w);
+
+      }
+
+
+      for(const ro of robs){
+
+        const wrap=
+          document.createElement('div');
+
+        wrap.className=
+          'robot-wrap anim-pop';
+
+
+        const icon=
+          document.createElement('div');
+
+        icon.className=
+          'robot-icon';
+
+
+        const sub=
+          document.createElement('div');
+
+        sub.className=
+          'robot-sub';
+
+
+        if(ro.is_leader){
+
+          icon.innerHTML=
+            svgLeader();
+
+          icon.classList.add(
+            'anim-leader'
+          );
+
+          sub.textContent=
+            'LEADER';
+
+          sub.style.color=
+            'var(--leader)';
+
+        }else if(
+          ro.pos[0]===s.target[0]
+          &&
+          ro.pos[1]===s.target[1]
+        ){
+
+          icon.innerHTML=
+            svgDone();
+
+          sub.textContent=
+            ro.id;
+
+          sub.style.color=
+            'var(--follower)';
+
+        }else{
+
+          icon.innerHTML=
+            svgRobot();
+
+          sub.textContent=
+            ro.id;
+
+        }
+
+
+        wrap.appendChild(icon);
+
+        wrap.appendChild(sub);
+
+        ct.appendChild(wrap);
+
+      }
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   PHASE
+   ========================================================= */
+
+function renderPhase(s){
+
+  const PCFG={
+
+    INIT:{
+      label:'INIT',
+      color:'#7880AA',
+      bg:'#F4F6FA'
+    },
+
+    RUNNING:{
+      label:'EXPLORE',
+      color:'#0E7C7B',
+      bg:'#E3F6F5'
+    },
+
+    BACKTRACK:{
+      label:'BACKTRACK',
+      color:'#E2653A',
+      bg:'#FCEEE6'
+    },
+
+    DONE:{
+      label:'DONE — ALL GATHERED',
+      color:'#3F7D20',
+      bg:'#EDF6E3'
+    }
+
+  };
+
+
+  const key=
+    s.last_action==='BACKTRACK'
+    ?
+    'BACKTRACK'
+    :
+    s.phase==='DONE'
+    ?
+    'DONE'
+    :
+    'RUNNING';
+
+
+  const cfg=
+    PCFG[key]
+    ||
+    PCFG.RUNNING;
+
+
+  const badge=
+    document.getElementById(
+      'phase-badge'
+    );
+
+  const dot=
+    document.getElementById(
+      'phase-dot'
+    );
+
+  const txt=
+    document.getElementById(
+      'phase-text'
+    );
+
+
+  badge.style.background=
+    cfg.bg;
+
+  badge.style.color=
+    cfg.color;
+
+  badge.style.borderColor=
+    cfg.color+'44';
+
+  dot.style.background=
+    cfg.color;
+
+  txt.textContent=
+    cfg.label;
+
+
+  const tag=
+    document.getElementById(
+      'case-tag'
+    );
+
+
+  if(tag){
+
+    if(s.election_contenders>0){
+
+      tag.textContent=
+        `⚡ Election: ${s.election_contenders}`;
+
+    }else if(s.leader_id){
+
+      tag.textContent=
+        `Leader ${s.leader_id} exploring`;
+
+    }else{
+
+      tag.textContent=
+        `${s.rows}×${s.cols} · ${s.total_robots} robots`;
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   STATISTICS
+   ========================================================= */
+
+function renderStats(s){
+
+  setText(
+    's-steps',
+    s.total_cycles
+  );
+
+  setText(
+    's-back',
+    s.backtrack_count
+  );
+
+  setText(
+    's-coll',
+    `${s.collected}/${s.total_robots}`
+  );
+
+  setText(
+    's-marked',
+    s.marked_nodes
+  );
+
+  setText(
+    'h-step',
+    s.total_cycles
+  );
+
+  setText(
+    'h-back',
+    s.backtrack_count
+  );
+
+  setText(
+    'h-coll',
+    `${s.collected}/${s.total_robots}`
+  );
+
+}
+
+
+/* =========================================================
+   ELECTION
+   ========================================================= */
+
+function renderElection(s){
+
+  const panel=
+    document.getElementById(
+      'election-panel'
+    );
+
+  const statusText=
+    document.getElementById(
+      'election-status-text'
+    );
+
+  const candWrap=
+    document.getElementById(
+      'election-candidates'
+    );
+
+  const winnerLine=
+    document.getElementById(
+      'election-winner-line'
+    );
+
+
+  if(!panel){
+    return;
+  }
+
+
+  const contending=
+    s.election_contenders>0;
+
+
+  panel.classList.toggle(
+    'active',
+    contending
+  );
+
+
+  panel.classList.toggle(
+    'decided',
+    !!s.leader_id
+  );
+
+
+  if(s.leader_id){
+
+    statusText.textContent=
+      'Election resolved';
+
+
+    candWrap.innerHTML=`
+
+      <span class="election-chip">
+
+        <span class="chip-id">
+          ${s.leader_id.replace('R','')}
+        </span>
+
+        ${s.leader_id} — LEADER
+
+      </span>
+
+    `;
+
+
+    winnerLine.textContent=
+      'Smallest robot ID wins the concurrent-write election.';
+
+  }else if(contending){
+
+    statusText.textContent=
+      `Election in progress — ${s.election_contenders}`;
+
+
+    const ids=
+      s.election_candidate_ids
+      ||
+      [];
+
+
+    candWrap.innerHTML=
+      ids.map(c=>{
+
+        const isSmallest=
+          ids.length>0
+          &&
+          c.rid_num===
+          Math.min(
+            ...ids.map(
+              x=>x.rid_num
+            )
+          );
+
+
+        return `
+
+          <span
+            class="election-chip"
+            title="ID ${c.rid_num}${isSmallest?' — currently smallest, will win':''}"
+          >
+
+            <span class="chip-id">
+              ${c.rid_num}
+            </span>
+
+            ${c.id}
+
+            ${isSmallest?' ★':''}
+
+          </span>
+
+        `;
+
+      }).join('');
+
+
+    winnerLine.textContent='';
+
+  }else{
+
+    statusText.textContent=
+      'Waiting for robots to reach target';
+
+
+    candWrap.innerHTML=
+      `
+        <span class="election-empty">
+          No robots on the target yet…
+        </span>
+      `;
+
+
+    winnerLine.textContent='';
+
+  }
+
+}
+
+
+/* =========================================================
+   ROBOT LIST
+   ========================================================= */
+
+function renderRobotList(s){
+
+  const list=
+    document.getElementById(
+      'robot-status-list'
+    );
+
+
+  if(!list){
+    return;
+  }
+
+
+  list.innerHTML='';
+
+
+  for(const ro of s.robots){
+
+    const atTarget=
+      ro.pos[0]===s.target[0]
+      &&
+      ro.pos[1]===s.target[1];
+
+
+    const visitsHere=
+      (
+        s.visit_count
+        &&
+        s.visit_count[ro.pos[0]]
+        &&
+        s.visit_count[ro.pos[0]][ro.pos[1]]
+      )
+      ||
+      0;
+
+
+    const row=
+      document.createElement('div');
+
+    row.className=
+      'robot-row';
+
+
+    const iconCls=
+      ro.is_leader
+      ?
+      'ldr'
+      :
+      atTarget
+      ?
+      'done'
+      :
+      'ind';
+
+
+    const badge=
+
+      ro.is_leader
+
+      ?
+
+      '<span class="rr-badge badge-leader">LEADER</span>'
+
+      :
+
+      atTarget
+
+      ?
+
+      '<span class="rr-badge badge-done">AT TARGET</span>'
+
+      :
+
+      '<span class="rr-badge badge-indep">INDEPENDENT</span>';
+
+
+    row.innerHTML=`
+
+      <div class="rr-icon ${iconCls}">
+        ${ro.id.replace('R','')}
+      </div>
+
+      <div class="rr-info">
+
+        <div class="rr-name">
+          ${ro.id} ${badge}
+        </div>
+
+        <div class="rr-pos">
+
+          pos(${ro.pos[0]},${ro.pos[1]})
+          wb=${ro.wb_current>=0?ro.wb_current:'—'}
+          moves=${ro.steps_taken}
+          visits(here)=${visitsHere}
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    list.appendChild(row);
+
+  }
+
+}
+
+
+/* =========================================================
+   WB MATRIX
+   ========================================================= */
+
+function renderWBMatrix(s){
+
+  const t=
+    document.getElementById(
+      'wb-matrix'
+    );
+
+
+  if(!t){
+    return;
+  }
+
+
+  const flatWb=
+    s.wb
+      .flat()
+      .filter(
+        v=>v>=0
+      );
+
+
+  const wbMax=
+    flatWb.length
+    ?
+    Math.max(...flatWb)
+    :
+    1;
+
+
+  let h=
+    '<tr><th></th>';
+
+
+  for(
+    let c=0;
+    c<s.cols;
+    c++
+  ){
+
+    h+=`
+      <th>
+        c${c}
+      </th>
+    `;
+
+  }
+
+
+  h+='</tr>';
+
+
+  for(
+    let r=0;
+    r<s.rows;
+    r++
+  ){
+
+    h+=`
+      <tr>
+        <th>r${r}</th>
+    `;
+
+
+    for(
+      let c=0;
+      c<s.cols;
+      c++
+    ){
+
+      const v=
+        s.wb[r][c];
+
+
+      const isT=
+        r===s.target[0]
+        &&
+        c===s.target[1];
+
+
+      const isL=
+        s.leader_pos
+        &&
+        r===s.leader_pos[0]
+        &&
+        c===s.leader_pos[1];
+
+
+      let cls=
+        'wm-unvis';
+
+
+      if(isT){
+
+        cls=
+          'wm-target';
+
+      }else if(isL){
+
+        cls=
+          'wm-leader';
+
+      }else if(v>=0){
+
+        const ratio=
+          v/wbMax;
+
+
+        cls=
+          ratio<0.33
+          ?
+          'wm-low'
+          :
+          ratio<0.66
+          ?
+          'wm-mid'
+          :
+          'wm-high';
+
+      }
+
+
+      h+=`
+        <td class="${cls}">
+          ${v>=0?v:'—'}
+        </td>
+      `;
+
+    }
+
+
+    h+='</tr>';
+
+  }
+
+
+  t.innerHTML=h;
+
+}
+
+
+/* =========================================================
+   VISIT MATRIX
+   ========================================================= */
+
+function renderVisitMatrix(s){
+
+  const t=
+    document.getElementById(
+      'visit-matrix'
+    );
+
+
+  if(!t){
+    return;
+  }
+
+
+  const vc=
+    s.visit_count;
+
+
+  if(!vc){
+    return;
+  }
+
+
+  const vmax=
+    s.visit_max
+    ||
+    1;
+
+
+  let h=
+    '<tr><th></th>';
+
+
+  for(
+    let c=0;
+    c<s.cols;
+    c++
+  ){
+
+    h+=`
+      <th>
+        c${c}
+      </th>
+    `;
+
+  }
+
+
+  h+='</tr>';
+
+
+  for(
+    let r=0;
+    r<s.rows;
+    r++
+  ){
+
+    h+=`
+      <tr>
+        <th>r${r}</th>
+    `;
+
+
+    for(
+      let c=0;
+      c<s.cols;
+      c++
+    ){
+
+      const v=
+        vc[r][c]
+        ||
+        0;
+
+
+      let cls=
+        'wm-unvis';
+
+
+      if(v>0){
+
+        const ratio=
+          v/vmax;
+
+
+        cls=
+          ratio<0.33
+          ?
+          'wm-low'
+          :
+          ratio<0.66
+          ?
+          'wm-mid'
+          :
+          'wm-high';
+
+      }
+
+
+      h+=`
+        <td class="${cls}">
+          ${v||'—'}
+        </td>
+      `;
+
+    }
+
+
+    h+='</tr>';
+
+  }
+
+
+  t.innerHTML=h;
+
+}
+
+
+/* =========================================================
+   EVENT
+   ========================================================= */
+
+function renderEventBanner(s){
+
+  const icon=
+    document.getElementById(
+      'event-icon'
+    );
+
+
+  const text=
+    document.getElementById(
+      'event-text'
+    );
+
+
+  const ICONS={
+
+    FORWARD:'→',
+
+    BACKTRACK:'↩',
+
+    LEADER_SELECTED:'★',
+
+    FOLLOW:'↓',
+
+    STAY:'·',
+
+    DONE:'✓',
+
+    NONE:'i',
+
+    PROPOSE_ID:'⚡'
+
+  };
+
+
+  const COLORS={
+
+    FORWARD:'#0E7C7B',
+
+    BACKTRACK:'#E2653A',
+
+    LEADER_SELECTED:'#C98A12',
+
+    FOLLOW:'#6D28D9',
+
+    DONE:'#3F7D20',
+
+    NONE:'#7880AA',
+
+    STAY:'#7880AA',
+
+    PROPOSE_ID:'#C98A12'
+
+  };
+
+
+  const act=
+    s.last_action
+    ||
+    'NONE';
+
+
+  if(icon){
+
+    icon.textContent=
+      ICONS[act]
+      ||
+      'i';
+
+
+    icon.style.background=
+      (
+        COLORS[act]
+        ||
+        '#7880AA'
+      )
+      +
+      '22';
+
+
+    icon.style.borderColor=
+      (
+        COLORS[act]
+        ||
+        '#7880AA'
+      )
+      +
+      '44';
+
+
+    icon.style.color=
+      COLORS[act]
+      ||
+      '#7880AA';
+
+  }
+
+
+  if(text){
+
+    text.textContent=
+      s.last_event
+      ||
+      '—';
+
+  }
+
+}
+
+
+/* =========================================================
+   LEADER FLASH
+   ========================================================= */
+
+function triggerLeaderFlash(){
+
+  const overlay=
+    document.getElementById(
+      'leader-flash-overlay'
+    );
+
+
+  overlay.classList.remove(
+    'show'
+  );
+
+
+  void overlay.offsetWidth;
+
+
+  overlay.classList.add(
+    'show'
+  );
+
+
+  setTimeout(
+    ()=>{
+      overlay.classList.remove(
+        'show'
+      );
+    },
+    1900
+  );
+
+}
+
+
+/* =========================================================
+   DONE POPUP
+   ========================================================= */
+
+function triggerDone(s){
+
+  stopPlay();
+
+
+  setTimeout(
+    ()=>{
+
+      setText(
+        'done-cycles',
+        s.total_cycles
+      );
+
+
+      setText(
+        'done-meta',
+        `${s.total_robots} robots · ${s.rows}×${s.cols} grid · Target (${s.target[0]},${s.target[1]})`
+      );
+
+
+      const vd=
+        s.visit_distribution
+        ||
+        {};
+
+
+      setText(
+        'done-vd-once',
+        vd.once
+        ||
+        0
+      );
+
+
+      setText(
+        'done-vd-twice',
+        vd.twice
+        ||
+        0
+      );
+
+
+      setText(
+        'done-vd-thrice',
+        vd.thrice
+        ||
+        0
+      );
+
+
+      setText(
+        'done-vd-more',
+        vd.more_than_thrice
+        ||
+        0
+      );
+
+
+      const tbody=
+        document.getElementById(
+          'done-robot-tbody'
+        );
+
+
+      tbody.innerHTML='';
+
+
+      for(
+        const ro of s.robots
+      ){
+
+        const cc=
+          ro.computation_cycles
+          ||
+          0;
+
+
+        const mc=
+          ro.steps_taken
+          ||
+          0;
+
+
+        const bk=
+          ro.backtracks_made
+          ||
+          0;
+
+
+        const isLdr=
+          ro.is_leader;
+
+
+        const dotCls=
+          isLdr
+          ?
+          'ldr'
+          :
+          'ind';
+
+
+        const role=
+          isLdr
+          ?
+          'LEADER'
+          :
+          'INDEP';
+
+
+        const tr=
+          document.createElement('tr');
+
+
+        tr.innerHTML=`
+
+          <td>
+
+            <div class="rct-id">
+
+              <div
+                class="rct-dot ${dotCls}"
+              >
+                ${ro.id.replace('R','')}
+              </div>
+
+              <div>
+
+                <div
+                  style="font-weight:600;color:var(--text)"
+                >
+                  ${ro.id}
+                </div>
+
+                <div
+                  style="font-size:9px;color:var(--text3)"
+                >
+                  ${role}
+                </div>
+
+              </div>
+
+            </div>
+
+          </td>
+
+
+          <td>
+            <span class="rct-val-main">
+              ${cc}
+            </span>
+          </td>
+
+
+          <td>
+            <span class="rct-val-sub">
+              ${mc}
+            </span>
+          </td>
+
+
+          <td>
+            <span class="rct-val-back">
+              ${bk}
+            </span>
+          </td>
+
+        `;
+
+
+        tbody.appendChild(tr);
+
+      }
+
+
+      document
+        .getElementById(
+          'done-overlay'
+        )
+        .classList.add('show');
+
+    },
+
+    600
+  );
+
+}
+
+
+/* =========================================================
+   CONTROL STATE
+   ========================================================= */
+
+function updateControls(){
+
+  const s=
+    RG.state;
+
+
+  if(!s){
+    return;
+  }
+
+
+  const done=
+    s.phase==='DONE';
+
+
+  const stepBtn=
+    document.getElementById(
+      'btn-step'
+    );
+
+
+  const undoBtn=
+    document.getElementById(
+      'btn-undo'
+    );
+
+
+  if(stepBtn){
+
+    stepBtn.disabled=
+      done
+      &&
+      !RG.replayMode;
+
+  }
+
+
+  if(undoBtn){
+
+    undoBtn.disabled=
+      !s.can_undo
+      ||
+      RG.replayMode;
+
+  }
+
+}
+
+
+/* =========================================================
+   CONFIGURATION UI
+   ========================================================= */
+
+function toggleConfig(){
+
+  document
+    .getElementById('cfg-drawer')
+    .classList.toggle('open');
+
+  document
+    .getElementById('cfg-overlay')
+    .classList.toggle('show');
+
+}
+
+
+function closeConfig(){
+
+  document
+    .getElementById('cfg-drawer')
+    .classList.remove('open');
+
+  document
+    .getElementById('cfg-overlay')
+    .classList.remove('show');
+
+}
+
+
+/* =========================================================
+   PARSE GRID SIZE
+   ========================================================= */
+
+function parseGridSize(){
+
+  const value=
+    (
+      document
+        .getElementById('cfg-grid-size')
+        ?.value
+      ||
+      ''
+    )
+    .trim()
+    .toLowerCase();
+
+
+  /*
+    Accepts:
+
+    25x25
+    15x25
+    15 x 25
+    15X50
+  */
+
+  const match=
+    value.match(
+      /^(\d+)\s*x\s*(\d+)$/
+    );
+
+
+  if(!match){
+
+    showToast(
+      'Enter grid size as rows x columns, e.g. 25x25',
+      'error'
+    );
+
+    return null;
+  }
+
+
+  const rows=
+    parseInt(
+      match[1],
+      10
+    );
+
+
+  const cols=
+    parseInt(
+      match[2],
+      10
+    );
+
+
+  if(
+    !Number.isInteger(rows)
+    ||
+    !Number.isInteger(cols)
+    ||
+    rows<1
+    ||
+    cols<1
+  ){
+
+    showToast(
+      'Grid dimensions must be at least 1',
+      'error'
+    );
+
+    return null;
+  }
+
+
+  return {
+    rows,
+    cols
+  };
+
+}
+
+
+/* =========================================================
+   TARGET TYPE
+   ========================================================= */
+
+function getSelectedTargetType(){
+
+  const selected=
+    document.querySelector(
+      'input[name="target-location"]:checked'
+    );
+
+
+  return(
+    selected?.value
+    ||
+    'border'
+  );
+
+}
+
+
+function selectTargetType(radio){
+
+  document
+    .querySelectorAll(
+      '.cfg-choice'
+    )
+    .forEach(
+      el=>{
+        el.classList.remove(
+          'selected'
+        );
+      }
+    );
+
+
+  radio
+    ?.closest('.cfg-choice')
+    ?.classList.add(
+      'selected'
+    );
+
+}
+
+
+/* =========================================================
+   ROBOT COUNT
+   ========================================================= */
+
+function getConfiguredRobotCount(){
+
+  const count=
+    parseInt(
+      document
+        .getElementById(
+          'cfg-robot-count'
+        )
+        ?.value,
+      10
+    );
+
+
+  if(
+    !Number.isInteger(count)
+    ||
+    count<1
+  ){
+
+    showToast(
+      'Enter a valid number of robots',
+      'error'
+    );
+
+    return null;
+  }
+
+
+  return count;
+
+}
+
+
+/* =========================================================
+   TRIAL COUNT
+   ========================================================= */
+
+function getConfiguredTrials(){
+
+  const trials=
+    parseInt(
+      document
+        .getElementById(
+          'cfg-trials'
+        )
+        ?.value,
+      10
+    );
+
+
+  if(
+    !Number.isInteger(trials)
+    ||
+    trials<1
+  ){
+
+    showToast(
+      'Enter a valid number of trials',
+      'error'
+    );
+
+    return null;
+  }
+
+
+  return trials;
+
+}
+
+
+/* =========================================================
+   GENERATE CONFIGURATION
+   ========================================================= */
+
+function newRandomConfig(){
+
+  const grid=
+    parseGridSize();
+
+
+  if(!grid){
+    return;
+  }
+
+
+  const robotCount=
+    getConfiguredRobotCount();
+
+
+  if(robotCount===null){
+    return;
+  }
+
+
+  const trials=
+    getConfiguredTrials();
+
+
+  if(trials===null){
+    return;
+  }
+
+
+  if(
+    robotCount>
+    grid.rows*grid.cols
+  ){
+
+    showToast(
+      'Number of robots cannot exceed total grid cells',
+      'error'
+    );
+
+    return;
+  }
+
+
+  const targetType=
+    getSelectedTargetType();
+
+
+  /*
+    Store the configuration locally.
+
+    The backend will generate:
+      - the exact random target
+      - random robot positions
+      - required target/neighbor anchor
+  */
+
+  RG.experimentTrials=
+    trials;
+
+
+  RG.experimentConfig={
+
+    rows:grid.rows,
+
+    cols:grid.cols,
+
+    target_type:targetType,
+
+    num_robots:robotCount,
+
+    trials:trials
+
+  };
+
+
+  closeConfig();
+
+
+  /*
+    Generate ONE configuration
+    and load it into the normal UI.
+  */
+
+  doReset({
+
+    rows:grid.rows,
+
+    cols:grid.cols,
+
+    target_type:targetType,
+
+    num_robots:robotCount
+
+  });
+
+}
+
+
+/* =========================================================
+   RUN EXPERIMENT
+   ========================================================= */
+
+async function runExperimentFromConfig(){
+
+  const grid=
+    parseGridSize();
+
+
+  if(!grid){
+    return;
+  }
+
+
+  const robotCount=
+    getConfiguredRobotCount();
+
+
+  if(robotCount===null){
+    return;
+  }
+
+
+  const trials=
+    getConfiguredTrials();
+
+
+  if(trials===null){
+    return;
+  }
+
+
+  if(
+    robotCount>
+    grid.rows*grid.cols
+  ){
+
+    showToast(
+      'Number of robots cannot exceed total grid cells',
+      'error'
+    );
+
+    return;
+  }
+
+
+  const targetType=
+    getSelectedTargetType();
+
+
+  RG.experimentTrials=
+    trials;
+
+
+  RG.experimentConfig={
+
+    rows:grid.rows,
+
+    cols:grid.cols,
+
+    target_type:targetType,
+
+    num_robots:robotCount,
+
+    trials:trials
+
+  };
+
+
+  showToast(
+    `Running ${trials} experiment trial${trials===1?'':'s'}...`,
+    'info'
+  );
+
+
+  const result=
+    await api(
+      '/api/run_experiment',
+      'POST',
+      {
+
+        rows:grid.rows,
+
+        cols:grid.cols,
+
+        target_type:targetType,
+
+        num_robots:robotCount,
+
+        trials:trials
+
+      }
+    );
+
+
+  if(!result){
+    return;
+  }
+
+
+  /*
+    The experiment-results UI
+    will use result.results later.
+  */
+
+  if(result.results){
+
+    console.log(
+      'Experiment results:',
+      result.results
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   SYNC CONFIGURATION WITH STATE
+   ========================================================= */
+
+function syncConfigFromState(s){
+
+  if(!s){
+    return;
+  }
+
+
+  const targetEl=
+    document.getElementById(
+      'cfg-target'
+    );
+
+
+  if(targetEl){
+
+    targetEl.value=
+      `${s.target[0]},${s.target[1]}`;
+
+  }
+
+
+  const gridEl=
+    document.getElementById(
+      'cfg-grid-size'
+    );
+
+
+  if(gridEl){
+
+    gridEl.value=
+      `${s.rows}x${s.cols}`;
+
+  }
+
+
+  const robotEl=
+    document.getElementById(
+      'cfg-robot-count'
+    );
+
+
+  if(robotEl){
+
+    robotEl.value=
+      s.total_robots;
+
+  }
+
+
+  const trialsEl=
+    document.getElementById(
+      'cfg-trials'
+    );
+
+
+  if(trialsEl){
+
+    trialsEl.value=
+      RG.experimentTrials
+      ||
+      10;
+
+  }
+
+}
+
+
+/* =========================================================
+   TOAST
+   ========================================================= */
+
+function showToast(
+  msg,
+  type='info'
+){
+
+  const t=
+    document.createElement('div');
+
+
+  t.className=
+    `toast toast-${type}`;
+
+
+  t.textContent=
+    msg;
+
+
+  document
+    .getElementById(
+      'toast-container'
+    )
+    .appendChild(t);
+
+
+  setTimeout(
+    ()=>{
+      t.classList.add('show');
+    },
+    10
+  );
+
+
+  setTimeout(
+    ()=>{
+
+      t.classList.remove(
+        'show'
+      );
+
+
+      setTimeout(
+        ()=>{
+          t.remove();
+        },
+        300
+      );
+
+    },
+    3000
+  );
+
+}
+
+
+/* =========================================================
+   SET TEXT
+   ========================================================= */
+
+function setText(id,v){
+
+  const el=
+    document.getElementById(id);
+
+
+  if(el){
+
+    el.textContent=v;
+
+  }
+
+}
+
+
+/* =========================================================
+   KEYBOARD
+   ========================================================= */
+
+document.addEventListener(
+  'keydown',
+  e=>{
+
+    if(
+      e.target.tagName==='INPUT'
+      ||
+      e.target.tagName==='TEXTAREA'
+    ){
+
+      return;
+    }
+
+
+    if(e.key===' '){
+
+      e.preventDefault();
+
+      doStep();
+
+    }
+
+
+    if(
+      e.key==='p'
+      ||
+      e.key==='P'
+    ){
+
+      togglePlay();
+
+    }
+
+
+    if(
+      e.key==='r'
+      ||
+      e.key==='R'
+    ){
+
+      doReset();
+
+    }
+
+
+    if(
+      e.key==='u'
+      ||
+      e.key==='U'
+    ){
+
+      doUndo();
+
+    }
+
+
+    if(
+      e.key==='ArrowRight'
+    ){
+
+      if(
+        RG.replayMode
+      ){
+
+        replayNext();
+
+      }else{
+
+        const sl=
+          document.getElementById(
+            'speed-slider'
+          );
+
+
+        sl.value=
+          Math.min(
+            10,
+            +sl.value+1
+          );
+
+
+        setSpeed(
+          sl.value
+        );
+
+      }
+
+    }
+
+
+    if(
+      e.key==='ArrowLeft'
+    ){
+
+      if(
+        RG.replayMode
+      ){
+
+        replayPrev();
+
+      }else{
+
+        const sl=
+          document.getElementById(
+            'speed-slider'
+          );
+
+
+        sl.value=
+          Math.max(
+            1,
+            +sl.value-1
+          );
+
+
+        setSpeed(
+          sl.value
+        );
+
+      }
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   INITIAL LOAD
+   ========================================================= */
+
+(async()=>{
+
+  const s=
+    await api(
+      '/api/state'
+    );
+
+
+  if(s){
+
+    RG.state=s;
+
+    RG.rows=s.rows;
+
+    RG.cols=s.cols;
+
+
+    buildGrid(
+      s.rows,
+      s.cols
+    );
+
+
+    render(s);
+
+    updateControls();
+
+    syncConfigFromState(s);
+
+  }
+
+})();
+
+</script>
+
+</body>
+</html>
